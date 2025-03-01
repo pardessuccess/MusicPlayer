@@ -44,7 +44,7 @@ fun DeletePlaylistDialog(
                     text1 = "확인",
                     text2 = "취소",
                     onClick1 = {
-                        onEvent(PlaylistUiEvent.DeletePlaylist)
+                        onEvent(PlaylistUiEvent.DeletePlaylists)
                         onEvent(PlaylistUiEvent.SetShowDeletePlaylistDialog(false))
                     },
                     onClick2 = {

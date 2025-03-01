@@ -93,7 +93,9 @@ fun DetailArtistScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(BackgroundColor),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundColor),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         HorizontalPagerIndicator(
@@ -110,7 +112,7 @@ fun DetailArtistScreen(
         ) { page ->
             Box(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.TopCenter
             ) {
                 when (page) {
                     0 -> {
@@ -118,7 +120,8 @@ fun DetailArtistScreen(
                             is UiState.Loading -> CircularProgressIndicator(modifier = Modifier.fillMaxSize())
                             is UiState.Error -> Text(
                                 "Error: ${songsState.message}",
-                                color = Color.Red
+                                color = Color.Red,
+                                modifier = Modifier.align(Alignment.Center)
                             )
 
                             is UiState.Success -> ArtistSongsSection(
@@ -137,7 +140,8 @@ fun DetailArtistScreen(
                             is UiState.Loading -> CircularProgressIndicator(modifier = Modifier.fillMaxSize())
                             is UiState.Error -> Text(
                                 "Error: ${albumsState.message}",
-                                color = Color.Red
+                                color = Color.Red,
+                                modifier = Modifier.align(Alignment.Center)
                             )
 
                             is UiState.Success -> ArtistAlbumsSection(

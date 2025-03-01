@@ -1,7 +1,5 @@
 package com.pardess.musicplayer.presentation.playlist.detail
 
-import androidx.compose.animation.core.animateDp
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -28,9 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +37,6 @@ import androidx.compose.ui.unit.sp
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.presentation.component.CheckSongItem
-import com.pardess.musicplayer.presentation.component.TwoBottomButton
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.playlist.dialog.AddSongToPlaylistDialog
 import com.pardess.musicplayer.presentation.playlist.dialog.DeleteSongDialog
@@ -54,7 +48,6 @@ import kotlinx.coroutines.launch
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun PlaylistDetailScreen(
     onNavigateToRoute: (String) -> Unit,
@@ -70,11 +63,7 @@ fun PlaylistDetailScreen(
     val playlistSongs = uiState.value.playlistSongs
     val playlist = uiState.value.playlist
     val deleteMode = uiState.value.deleteMode
-
-    val transition = updateTransition(
-        targetState = !deleteMode,
-        label = "ButtonVisibilityTransition"
-    )
+    val selectedSongs = uiState.value.selectedSongs
 
     val scope = rememberCoroutineScope()
 
@@ -90,7 +79,9 @@ fun PlaylistDetailScreen(
                 horizontalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    modifier = Modifier.padding(top = 20.dp, bottom = 16.dp).basicMarquee(1),
+                    modifier = Modifier
+                        .padding(top = 20.dp, bottom = 16.dp)
+                        .basicMarquee(1),
                     text = playlist?.playlistName ?: "Playlist Name",
                     fontWeight = FontWeight.SemiBold,
                     color = Color.Black,
@@ -115,12 +106,7 @@ fun PlaylistDetailScreen(
                         items = playlistSongs,
                         key = { song -> song.songPrimaryKey }
                     ) { playlistSong ->
-                        var checked: Boolean
-                        if (uiState.value.selectedSongs.contains(playlistSong)) {
-                            checked = true
-                        } else {
-                            checked = false
-                        }
+                        var checked = selectedSongs.contains(playlistSong)
                         CheckSongItem(
                             checked = checked,
                             onClick = {
@@ -163,15 +149,7 @@ fun PlaylistDetailScreen(
                             Box(
                                 modifier = Modifier
                                     .clickable {
-                                        onEvent(DetailPlaylistUiEvent.SetDeleteMode)
-                                        if (deleteMode) {
-                                            scope.launch {
-                                                if (playlistSongs.isNotEmpty()) {
-                                                    delay(400L)
-                                                    lazyListState.scrollToItem(lazyListState.layoutInfo.totalItemsCount - 1)
-                                                }
-                                            }
-                                        }
+                                        onEvent(DetailPlaylistUiEvent.ToggleDeleteMode)
                                     }
                                     .weight(1f)
                             ) {
@@ -186,15 +164,9 @@ fun PlaylistDetailScreen(
                             Box(
                                 modifier = Modifier
                                     .clickable {
-                                        if (uiState.value.deleteMode) {
+                                        if (deleteMode) {
                                             onEvent(DetailPlaylistUiEvent.DeleteSelectedSongs)
-                                            onEvent(DetailPlaylistUiEvent.SetDeleteMode)
-                                            if (deleteMode) {
-                                                scope.launch {
-                                                    delay(400L)
-                                                    lazyListState.scrollToItem(lazyListState.layoutInfo.totalItemsCount - 1)
-                                                }
-                                            }
+                                            onEvent(DetailPlaylistUiEvent.ToggleDeleteMode)
                                         } else onEvent(
                                             DetailPlaylistUiEvent.SetShowAddSongDialog(
                                                 true
@@ -207,7 +179,7 @@ fun PlaylistDetailScreen(
                                     modifier = Modifier
                                         .size(80.dp)
                                         .align(Alignment.Center),
-                                    painter = painterResource(if (uiState.value.deleteMode) R.drawable.ic_check else R.drawable.ic_add),
+                                    painter = painterResource(if (deleteMode) R.drawable.ic_check else R.drawable.ic_add),
                                     contentDescription = null
                                 )
                             }

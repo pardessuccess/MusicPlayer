@@ -31,8 +31,8 @@ class PlaylistRepositoryImpl @Inject constructor(
         playlistDao.updatePlaylists(playlists)
     }
 
-    override suspend fun deletePlaylist(playlist: PlaylistEntity) {
-        playlistDao.deletePlaylist(playlist)
+    override suspend fun deletePlaylistsByIds(ids: List<Long>) {
+        playlistDao.deletePlaylistsByIds(ids)
     }
 
     override suspend fun insertSongEntity(playlistSong: PlaylistSong) {

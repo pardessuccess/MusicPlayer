@@ -1,11 +1,9 @@
 package com.pardess.musicplayer.presentation.playback
 
-import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
@@ -16,7 +14,6 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,15 +50,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.domain.model.enums.PlayerState
@@ -69,14 +63,10 @@ import com.pardess.musicplayer.presentation.component.CustomSlider
 import com.pardess.musicplayer.presentation.component.CustomSliderDefaults
 import com.pardess.musicplayer.presentation.component.FullWidthButton
 import com.pardess.musicplayer.presentation.component.MusicImage
-import com.pardess.musicplayer.presentation.component.TwoBottomButton
 import com.pardess.musicplayer.presentation.component.progress
 import com.pardess.musicplayer.presentation.component.track
 import com.pardess.musicplayer.ui.theme.BackgroundColor
-import com.pardess.musicplayer.ui.theme.NavBackgroundColor
-import com.pardess.musicplayer.ui.theme.NavSelectedBackgroundColor
-import com.pardess.musicplayer.ui.theme.PointColor
-import com.pardess.musicplayer.ui.theme.TextColor
+import com.pardess.musicplayer.ui.theme.PointBackgroundColor
 import com.pardess.musicplayer.utils.Utils.toTime
 
 @Composable
@@ -126,9 +116,8 @@ fun Playback(
         }
     }
 
-
     val backgroundColor by animateColorAsState(
-        targetValue = if (playbackUiState.expand) Color(0xFFFFFFFF) else Color(0xFFDCF0FF),
+        targetValue = if (playbackUiState.expand) BackgroundColor else PointBackgroundColor,
         animationSpec = tween(durationMillis = 400)
     )
 
@@ -232,7 +221,7 @@ fun HomeBottomBarItem(
             .drawBehind {
                 val strokeWidth = if (!expand) 4.dp.toPx() else 0.0.dp.toPx()
                 drawLine(
-                    color = NavSelectedBackgroundColor,
+                    color = PointBackgroundColor,
                     start = Offset(0f, size.height - strokeWidth / 2), // 약간 중앙 정렬
                     end = Offset(size.width, size.height - strokeWidth / 2),
                     strokeWidth = strokeWidth

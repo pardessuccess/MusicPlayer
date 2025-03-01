@@ -56,9 +56,8 @@ interface PlaylistDao {
     @Update
     suspend fun updatePlaylists(playlists: List<PlaylistEntity>)
 
-    // 플레이리스트 삭제
-    @Delete
-    suspend fun deletePlaylist(playlist: PlaylistEntity)
+    @Query("DELETE FROM PlaylistEntity WHERE playlist_id IN (:ids)")
+    suspend fun deletePlaylistsByIds(ids: List<Long>)
 
     // 특정 ID의 플레이리스트 조회
     @Query("SELECT * FROM PlaylistEntity WHERE playlist_id = :id")

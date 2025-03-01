@@ -15,9 +15,8 @@ sealed class DetailPlaylistUiEvent {
 
     object SaveSongToPlaylist : DetailPlaylistUiEvent()
 
-    object SetDeleteMode : DetailPlaylistUiEvent()
+    object ToggleDeleteMode : DetailPlaylistUiEvent()
 
     object DeleteSelectedSongs : DetailPlaylistUiEvent()
-
 
 }
