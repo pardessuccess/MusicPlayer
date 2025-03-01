@@ -7,11 +7,20 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.widget.Toast
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -48,6 +57,10 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.presentation.component.FullWidthButton
 import com.pardess.musicplayer.presentation.playlist.PlaylistUiEvent
+import com.pardess.musicplayer.ui.theme.Gray300
+import com.pardess.musicplayer.ui.theme.PointColor
+import com.pardess.musicplayer.ui.theme.PointColor3
+import com.pardess.musicplayer.ui.theme.TextColor
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -77,6 +90,10 @@ fun CreatePlaylistDialog(
 
     var speechStatusMsg by remember { mutableStateOf("버튼을 누르고 말해 주세요.") }
 
+    var showGuideText by remember { mutableStateOf(true) }
+
+    var isRecording by remember { mutableStateOf(false) }
+
     LaunchedEffect(speechStatusMsg) {
         Toast.makeText(context, speechStatusMsg, Toast.LENGTH_SHORT).show()
     }
@@ -88,7 +105,46 @@ fun CreatePlaylistDialog(
         },
         setSpeechResult = {
             name = it
+        },
+        setSpeechStatus = {
+            when (it) {
+                SpeechStatus.READY -> {
+                    isRecording = true
+                }
+
+                SpeechStatus.COMPLETE -> {
+                    isRecording = false
+                }
+
+                SpeechStatus.ERROR -> {
+                    isRecording = false
+                }
+
+                SpeechStatus.IN_PROGRESS -> {
+                    isRecording = true
+                }
+            }
         }
+    )
+
+    val infiniteTransition = rememberInfiniteTransition()
+
+    val radius by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 300f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000),
+            repeatMode = RepeatMode.Restart
+        ), label = ""
+    )
+
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000),
+            repeatMode = RepeatMode.Restart
+        ), label = ""
     )
 
     Dialog(
@@ -107,27 +163,27 @@ fun CreatePlaylistDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Create Playlist",
-                    fontSize = 20.sp,
+                    fontSize = 40.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()
                             .height(100.dp)
                             .background(
                                 shape = RoundedCornerShape(20.dp),
-                                color = Color(0xFFE1E1EB)
+                                color = PointColor
                             )
                             .clip(shape = RoundedCornerShape(20.dp))
                             .clickable {
                                 if (hasRecordPermission) {
+                                    showGuideText = false
                                     speechRecognizer.startListening(intent)
                                 } else {
                                     recordPermissionState.launchPermissionRequest()
@@ -148,13 +204,14 @@ fun CreatePlaylistDialog(
                             textStyle = TextStyle(
                                 fontSize = 30.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Black
+                                color = TextColor
                             ),
                             singleLine = true,
                         )
                         IconButton(
                             modifier = Modifier.size(60.dp),
                             onClick = {
+                                showGuideText = false
                                 isEditing = true
                             }
                         ) {
@@ -162,18 +219,60 @@ fun CreatePlaylistDialog(
                                 modifier = Modifier.size(40.dp),
                                 painter = painterResource(id = R.drawable.ic_keyboard),
                                 contentDescription = "edit",
+                                tint = TextColor
                             )
                         }
                     }
+                    if (showGuideText) {
+                        Text(
+                            text = "눌러서 입력하세요",
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .align(Alignment.CenterStart),
+                            color = Color.Black,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                FullWidthButton(
-                    text = "Create",
-                    onClick = {
-                        onEvent(PlaylistUiEvent.SetShowPlaylistDialog(false))
-                        onEvent(PlaylistUiEvent.CreatePlaylist(name))
+                if (isRecording) {
+                    Box {
+                        Icon(
+                            tint = TextColor,
+                            painter = painterResource(id = R.drawable.ic_mic),
+                            contentDescription = "mic",
+                            modifier = Modifier
+                                .size(100.dp)
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(50.dp))
+                                .background(
+                                    shape = RoundedCornerShape(75.dp),
+                                    color = Color.Red
+                                )
+                        )
+                        Canvas(
+                            modifier = Modifier
+                                .size(100.dp)
+                                .aspectRatio(1f)
+                        ) {
+                            drawCircle(
+                                color = Color.Black.copy(alpha = alpha), // 투명도 적용
+                                radius = radius // 애니메이션된 반지름 적용
+                            )
+                        }
                     }
-                )
+                } else {
+                    FullWidthButton(
+                        text = "만들기",
+                        color = if (name.isEmpty()) Gray300 else PointColor,
+                        onClick = {
+                            if (name.isEmpty()) return@FullWidthButton
+                            onEvent(PlaylistUiEvent.SetShowPlaylistDialog(false))
+                            onEvent(PlaylistUiEvent.CreatePlaylist(name))
+                        }
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
@@ -189,15 +288,18 @@ fun CreatePlaylistDialog(
 fun setSpeechRecognizer(
     speechRecognizer: SpeechRecognizer,
     setSpeechStatusMsg: (String) -> Unit,
-    setSpeechResult: (String) -> Unit
+    setSpeechResult: (String) -> Unit,
+    setSpeechStatus: (SpeechStatus) -> Unit,
 ) {
     speechRecognizer.setRecognitionListener(object : RecognitionListener {
         override fun onReadyForSpeech(params: Bundle) {
             setSpeechStatusMsg("음성 인식 준비 중...")
+            setSpeechStatus(SpeechStatus.READY)
         }
 
         override fun onBeginningOfSpeech() {
             setSpeechStatusMsg("음성 인식 중...")
+            setSpeechStatus(SpeechStatus.IN_PROGRESS)
         }
 
         override fun onRmsChanged(rmsdB: Float) {}
@@ -207,10 +309,12 @@ fun setSpeechRecognizer(
 
         override fun onEndOfSpeech() {
             setSpeechStatusMsg("음성 인식 완료")
+            setSpeechStatus(SpeechStatus.COMPLETE)
         }
 
         override fun onError(error: Int) {
             setSpeechStatusMsg("오류 발생: $error")
+            setSpeechStatus(SpeechStatus.ERROR)
         }
 
         override fun onResults(results: Bundle?) {
@@ -218,9 +322,21 @@ fun setSpeechRecognizer(
             setSpeechResult(matches?.get(0) ?: "오류")
             setSpeechStatusMsg(matches?.get(0) ?: "결과를 찾을 수 없습니다.")
             println(matches?.get(0) ?: "결과를 찾을 수 없습니다.")
+            if (matches?.get(0) != null) {
+                setSpeechStatus(SpeechStatus.COMPLETE)
+            } else {
+                setSpeechStatus(SpeechStatus.ERROR)
+            }
         }
 
         override fun onPartialResults(partialResults: Bundle?) {}
         override fun onEvent(eventType: Int, params: Bundle?) {}
     })
+}
+
+enum class SpeechStatus {
+    READY,
+    COMPLETE,
+    ERROR,
+    IN_PROGRESS
 }

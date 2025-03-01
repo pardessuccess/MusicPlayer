@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -39,7 +41,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
@@ -56,6 +57,7 @@ import com.pardess.musicplayer.presentation.playlist.component.rememberDragAndDr
 import com.pardess.musicplayer.presentation.playlist.dialog.CreatePlaylistDialog
 import com.pardess.musicplayer.presentation.playlist.dialog.DeletePlaylistDialog
 import com.pardess.musicplayer.ui.theme.BackgroundColor
+import com.pardess.musicplayer.ui.theme.Gray300
 import com.pardess.musicplayer.ui.theme.NavigationBarHeight
 import com.pardess.musicplayer.ui.theme.PointColor
 import com.pardess.musicplayer.ui.theme.TextColor
@@ -69,6 +71,10 @@ fun PlaylistScreen(
     onEvent: (PlaylistUiEvent) -> Unit,
 ) {
     val playlists = remember { mutableStateListOf<PlaylistEntity>() }
+
+    val deleteMode = uiState.value.deleteMode
+    val selectedPlaylistsIds = uiState.value.selectedPlaylistIds
+
     LaunchedEffect(uiState.value.playlists) {
         playlists.clear()
         playlists.addAll(uiState.value.playlists)
@@ -109,16 +115,28 @@ fun PlaylistScreen(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 itemsIndexed(playlists) { index, playlist ->
+                    var checked = selectedPlaylistsIds.contains(playlist.playlistId)
                     DraggableItem(
                         dragAndDropListState = dragAndDropListState,
                         index = index
                     ) { modifier ->
-                        PlaylistComponent(
+                        PlaylistItem(
                             modifier = modifier,
                             playlist = playlist,
                             onClick = {
-                                onNavigateToRoute(Screen.DetailPlaylist.route + "/${playlist.playlistId}")
+                                if (deleteMode) {
+                                    checked = !checked
+                                    onEvent(
+                                        PlaylistUiEvent.TogglePlaylistSelection(
+                                            playlist,
+                                            checked
+                                        )
+                                    )
+                                } else {
+                                    onNavigateToRoute(Screen.DetailPlaylist.route + "/${playlist.playlistId}")
+                                }
                             },
+                            checked = checked
                         )
                     }
                 }
@@ -132,7 +150,7 @@ fun PlaylistScreen(
                         Box(
                             modifier = Modifier
                                 .clickable {
-
+                                    onEvent(PlaylistUiEvent.ToggleDeleteMode)
                                 }
                                 .weight(1f)
                         ) {
@@ -147,7 +165,11 @@ fun PlaylistScreen(
                         Box(
                             modifier = Modifier
                                 .clickable {
-                                    onEvent(PlaylistUiEvent.SetShowPlaylistDialog(true))
+                                    if (deleteMode) {
+                                        onEvent(PlaylistUiEvent.DeletePlaylists)
+                                    } else {
+                                        onEvent(PlaylistUiEvent.SetShowPlaylistDialog(true))
+                                    }
                                 }
                                 .weight(1f)
                         ) {
@@ -155,7 +177,7 @@ fun PlaylistScreen(
                                 modifier = Modifier
                                     .size(80.dp)
                                     .align(Alignment.Center),
-                                painter = painterResource(R.drawable.ic_add),
+                                painter = painterResource(if (deleteMode) R.drawable.ic_check else R.drawable.ic_add),
                                 contentDescription = null
                             )
                         }
@@ -181,8 +203,9 @@ fun PlaylistScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PlaylistComponent(
+fun PlaylistItem(
     modifier: Modifier = Modifier,
+    checked: Boolean,
     playlist: PlaylistEntity,
     onClick: () -> Unit,
 ) {
@@ -192,7 +215,7 @@ fun PlaylistComponent(
             .height(120.dp)
             .background(
                 shape = RoundedCornerShape(20.dp),
-                color = PointColor
+                color = if (checked) Gray300 else PointColor
             )
             .clip(RoundedCornerShape(20.dp))
             .combinedClickable(
@@ -205,19 +228,28 @@ fun PlaylistComponent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(2f)
-                .padding(start = 16.dp),
+                ,
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            if (checked) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_check),
+                    contentDescription = null,
+                    tint = PointColor,
+                    modifier = Modifier
+                        .size(100.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
             Text(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).basicMarquee(1),
                 text = playlist.playlistName,
                 fontSize = 36.sp,
                 maxLines = 1,
                 color = TextColor,
                 fontWeight = FontWeight.Bold,
                 lineHeight = 30.sp,
-                overflow = TextOverflow.Ellipsis
             )
             Icon(
                 modifier = Modifier.size(70.dp),

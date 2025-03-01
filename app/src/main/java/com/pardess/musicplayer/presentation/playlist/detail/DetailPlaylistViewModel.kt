@@ -112,7 +112,7 @@ class DetailPlaylistViewModel @Inject constructor(
                 deleteSongs(_uiState.value.selectedSongs)
             }
 
-            DetailPlaylistUiEvent.SetDeleteMode -> {
+            DetailPlaylistUiEvent.ToggleDeleteMode -> {
                 _uiState.value = _uiState.value.copy(
                     selectedSongs = emptyList(),
                     deleteMode = !_uiState.value.deleteMode

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -47,23 +48,19 @@ class PlaylistViewModel @Inject constructor(
                 )
             }
 
-            is PlaylistUiEvent.SetShowAddSongDialog -> {
-                _uiState.value = _uiState.value.copy(
-                    dialogState = _uiState.value.dialogState.copy(isShowAddSongDialog = event.isShow)
-                )
-            }
-
-            is PlaylistUiEvent.ToggleSongSelection -> {
+            is PlaylistUiEvent.TogglePlaylistSelection -> {
                 // 예시: selectedSongs 리스트에 추가하거나 제거
-                val currentSongs = _uiState.value.dialogState.selectedSongs.toMutableList()
+                val selectedPlaylists = _uiState.value.selectedPlaylistIds.toMutableList()
                 if (event.isSelected) {
-                    currentSongs.add(event.song)
+                    selectedPlaylists.add(event.playlist.playlistId)
                 } else {
-                    currentSongs.remove(event.song)
+                    selectedPlaylists.remove(event.playlist.playlistId)
                 }
-                _uiState.value = _uiState.value.copy(
-                    dialogState = _uiState.value.dialogState.copy(selectedSongs = currentSongs)
-                )
+                _uiState.update {
+                    it.copy(
+                        selectedPlaylistIds = selectedPlaylists
+                    )
+                }
             }
 
             is PlaylistUiEvent.ChangePlaylistOrder -> {
@@ -74,17 +71,18 @@ class PlaylistViewModel @Inject constructor(
                 createPlaylist(event.playlistName)
             }
 
-            PlaylistUiEvent.DeletePlaylist -> {
-                _uiState.value.selectedPlaylist?.let { deletePlaylist(it) }
-            }
-
-            PlaylistUiEvent.SavePlaylist -> {
+            PlaylistUiEvent.DeletePlaylists -> {
                 viewModelScope.launch {
-                    playlistRepository.insertSongEntities(_uiState.value.dialogState.selectedSongs)
+                    _uiState.value.selectedPlaylistIds.let {
+                        playlistRepository.deletePlaylistsByIds(it)
+                    }
                 }
-                _uiState.value = _uiState.value.copy(
-                    dialogState = _uiState.value.dialogState.copy(selectedSongs = emptyList())
-                )
+                _uiState.update {
+                    it.copy(
+                        selectedPlaylistIds = emptyList(),
+                        deleteMode = false
+                    )
+                }
             }
 
             is PlaylistUiEvent.SetShowDeletePlaylistDialog -> {
@@ -92,6 +90,10 @@ class PlaylistViewModel @Inject constructor(
                     selectedPlaylist = event.playlistEntity,
                     dialogState = _uiState.value.dialogState.copy(isShowDeletePlaylistDialog = event.isShow)
                 )
+            }
+
+            PlaylistUiEvent.ToggleDeleteMode -> {
+                _uiState.value = _uiState.value.copy(deleteMode = !_uiState.value.deleteMode)
             }
         }
     }
@@ -102,12 +104,6 @@ class PlaylistViewModel @Inject constructor(
                 playlist.displayOrder = index
                 playlistRepository.updatePlaylist(playlist)
             }
-        }
-    }
-
-    private fun deletePlaylist(playlist: PlaylistEntity) {
-        viewModelScope.launch {
-            playlistRepository.deletePlaylist(playlist)
         }
     }
 
