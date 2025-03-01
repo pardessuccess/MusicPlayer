@@ -1,0 +1,26 @@
+package com.pardess.musicplayer.presentation.navigation
+
+enum class Screen(
+    val title: String,
+    val route: String,
+) {
+    Main("MainScreen", "main_screen"),
+    Playlist("PlaylistScreen", "playlist_screen"),
+    Artist("ArtistScreen", "artist_screen"),
+    Songs("SongsScreen", "songs_screen"),
+    DetailArtist("DetailArtistScreen", "artist_screen"),
+    DetailPlaylist("DetailPlaylistScreen", "detail_playlist_screen"),
+    Search("SearchScreen", "search_screen"),
+    Favorite("FavoriteScreen", "favorite_screen"),
+    History("HistoryScreen", "history_screen"),
+    PlayCount("PlayCountScreen", "play_count_screen"),
+}
+
+enum class Navigation(
+    val route: String,
+) {
+    HomeNavigation("home_route"),
+    MainNavigation("main_route"),
+    PlaylistNavigation("playlist_route"),
+    ArtistNavigation("artist_route"),
+}
