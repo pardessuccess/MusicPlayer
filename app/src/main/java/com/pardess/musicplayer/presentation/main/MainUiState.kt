@@ -15,6 +15,7 @@ data class MainUiState(
     val favoriteSongs: List<FavoriteSong> = emptyList(),
     val popularArtists: List<Artist> = emptyList(),
     val popularAlbums: List<Album> = emptyList(),
-    val searchHistories: List<SearchHistory> = emptyList()
+    val searchHistories: List<SearchHistory> = emptyList(),
+    val showGuideText: Boolean = false
 
     )

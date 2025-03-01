@@ -61,16 +61,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.pardess.musicplayer.R
+import com.pardess.musicplayer.data.entity.SongEntity
+import com.pardess.musicplayer.data.entity.join.FavoriteSong
 import com.pardess.musicplayer.domain.model.Album
 import com.pardess.musicplayer.domain.model.Artist
 import com.pardess.musicplayer.domain.model.SearchHistory
 import com.pardess.musicplayer.domain.model.SearchType
+import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.presentation.component.AutoResizeText
 import com.pardess.musicplayer.presentation.component.FontSizeRange
 import com.pardess.musicplayer.presentation.component.MusicImage
@@ -104,11 +108,13 @@ fun MainScreen(
     val popularArtists = uiState.popularArtists
     val popularAlbums = uiState.popularAlbums
     val searchHistories = uiState.searchHistories
+    val favoriteSongs = uiState.favoriteSongs
 
     val context = LocalContext.current
     var searchText by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
+    var isEditing by remember { mutableStateOf(false) }
 
     val speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
 
@@ -122,6 +128,16 @@ fun MainScreen(
 
     val expand = searchBoxState.expand
 
+    var showGuideText by remember { mutableStateOf(true) }
+
+    LaunchedEffect(expand) {
+        if (expand) {
+            showGuideText = false
+        } else {
+            isEditing = false
+        }
+    }
+
     var hasRecordPermission by remember { mutableStateOf(false) }
 
     val recordPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
@@ -129,15 +145,6 @@ fun MainScreen(
 
     var speechStatusMsg by remember { mutableStateOf("버튼을 누르고 말해 주세요.") }
 
-    LaunchedEffect(speechStatusMsg) {
-//        Toast.makeText(context, speechStatusMsg, Toast.LENGTH_SHORT).show()
-    }
-
-    setSpeechRecognizer(
-        speechRecognizer = speechRecognizer,
-        setSpeechStatusMsg = { speechStatusMsg = it },
-        setSpeechResult = { searchText = it }
-    )
 
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp - 24.dp
@@ -183,6 +190,20 @@ fun MainScreen(
         animationSpec = tween(durationMillis = 400)
     )
 
+    LaunchedEffect(speechStatusMsg) {
+//        Toast.makeText(context, speechStatusMsg, Toast.LENGTH_SHORT).show()
+    }
+
+    setSpeechRecognizer(
+        speechRecognizer = speechRecognizer,
+        setSpeechStatusMsg = { speechStatusMsg = it },
+        setSpeechResult = { searchText = it },
+        setSpeechStatus = {
+
+        }
+    )
+
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -197,83 +218,15 @@ fun MainScreen(
         ) {
             item {
                 Spacer(modifier = Modifier.height(132.dp))
-                Row(
-                    modifier = Modifier.wrapContentHeight(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Card(
-                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
-                    ) {
-                        MusicImage(
-                            filePath = song1st?.data ?: "",
-                            modifier = Modifier
-                                .size(bigIconSize)
-                                .aspectRatio(1f)
-                                .clip(shape = RoundedCornerShape(12.dp))
-                                .clickable {
-                                    if (song1st != null) {
-                                        onPlaybackEvent(
-                                            PlaybackEvent.PlaySong(
-                                                song1st.toSong(),
-                                                uiState.favoriteSongs.map { it.song.toSong() })
-                                        )
-                                    }
-                                },
-                            type = "album"
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(
-                        modifier = Modifier,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Card(
-                            elevation =
-                            CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
-                        ) {
-                            MusicImage(
-                                filePath = song2nd?.data ?: "",
-                                modifier = Modifier
-                                    .size(smallIconSize)
-                                    .aspectRatio(1f)
-                                    .clip(shape = RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        if (song2nd != null) {
-                                            onPlaybackEvent(
-                                                PlaybackEvent.PlaySong(
-                                                    song2nd.toSong(),
-                                                    uiState.favoriteSongs.map { it.song.toSong() })
-                                            )
-                                        }
-                                    },
-                                type = "song"
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Card(
-                            elevation =
-                            CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
-                        ) {
-                            MusicImage(
-                                filePath = song3rd?.data ?: "",
-                                modifier = Modifier
-                                    .size(smallIconSize)
-                                    .aspectRatio(1f)
-                                    .clip(shape = RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        if (song3rd != null)
-                                            onPlaybackEvent(
-                                                PlaybackEvent.PlaySong(
-                                                    song3rd.toSong(),
-                                                    uiState.favoriteSongs.map { it.song.toSong() })
-                                            )
-                                    },
-                                type = "artist"
-                            )
-                        }
-                    }
-                }
+                Top3SongsSection(
+                    onPlaybackEvent = onPlaybackEvent,
+                    song1st = song1st,
+                    song2nd = song2nd,
+                    song3rd = song3rd,
+                    favoriteSongs = favoriteSongs,
+                    bigIconSize = bigIconSize,
+                    smallIconSize = smallIconSize
+                )
                 Spacer(modifier = Modifier.height(16.dp))
             }
             item {
@@ -319,7 +272,7 @@ fun MainScreen(
             verticalArrangement = Arrangement.Top
         ) {
             Spacer(modifier = Modifier.height(innerPaddingSize))
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
@@ -336,10 +289,9 @@ fun MainScreen(
                             onSearchEvent(SearchBoxEvent.Expand)
                         }
                     },
-                verticalArrangement = Arrangement.Center
             ) {
                 Row(
-                    modifier = Modifier,
+                    modifier = Modifier.align(Alignment.CenterStart),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     BasicTextField(
@@ -351,7 +303,7 @@ fun MainScreen(
                             .weight(1f)
                             .padding(start = 16.dp)
                             .focusRequester(focusRequester),
-                        enabled = expand,
+                        enabled = isEditing,
                         textStyle = TextStyle(
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
@@ -389,8 +341,7 @@ fun MainScreen(
                             modifier = Modifier.size(60.dp),
                             onClick = {
                                 onSearchEvent(SearchBoxEvent.Expand)
-                                keyboardController?.show()
-                                focusRequester.requestFocus()
+                                isEditing = true
                             }
                         ) {
                             Icon(
@@ -402,6 +353,17 @@ fun MainScreen(
                         }
                     }
                 }
+                if (showGuideText) {
+                    Text(
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(start = 16.dp),
+                        text = "눌러서 검색하세요",
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextColor
+                    )
+                }
             }
             if (expand) {
                 SearchHistorySection(
@@ -412,7 +374,104 @@ fun MainScreen(
                 )
             }
         }
+        LaunchedEffect(isEditing) {
+            if (isEditing) {
+                focusRequester.requestFocus() // 포커스 부여
+                keyboardController?.show() // 키보드 표시
+            }
+        }
     }
+}
+
+@Composable
+fun Top3SongsSection(
+    modifier: Modifier = Modifier,
+    onPlaybackEvent: (PlaybackEvent) -> Unit,
+    song1st: SongEntity?,
+    song2nd: SongEntity?,
+    song3rd: SongEntity?,
+    favoriteSongs: List<FavoriteSong>,
+    bigIconSize: Dp,
+    smallIconSize: Dp,
+    ) {
+    Row(
+        modifier = Modifier.wrapContentHeight(),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Card(
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
+        ) {
+            MusicImage(
+                filePath = song1st?.data ?: "",
+                modifier = Modifier
+                    .size(bigIconSize)
+                    .aspectRatio(1f)
+                    .clip(shape = RoundedCornerShape(12.dp))
+                    .clickable {
+                        if (song1st != null) {
+                            onPlaybackEvent(
+                                PlaybackEvent.PlaySong(
+                                    song1st.toSong(),
+                                    favoriteSongs.map { it.song.toSong() })
+                            )
+                        }
+                    },
+                type = "album"
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(
+            modifier = Modifier,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Card(
+                elevation =
+                CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
+            ) {
+                MusicImage(
+                    filePath = song2nd?.data ?: "",
+                    modifier = Modifier
+                        .size(smallIconSize)
+                        .aspectRatio(1f)
+                        .clip(shape = RoundedCornerShape(12.dp))
+                        .clickable {
+                            if (song2nd != null) {
+                                onPlaybackEvent(
+                                    PlaybackEvent.PlaySong(
+                                        song2nd.toSong(),
+                                        favoriteSongs.map { it.song.toSong() })
+                                )
+                            }
+                        },
+                    type = "song"
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Card(
+                elevation =
+                CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
+            ) {
+                MusicImage(
+                    filePath = song3rd?.data ?: "",
+                    modifier = Modifier
+                        .size(smallIconSize)
+                        .aspectRatio(1f)
+                        .clip(shape = RoundedCornerShape(12.dp))
+                        .clickable {
+                            if (song3rd != null)
+                                onPlaybackEvent(
+                                    PlaybackEvent.PlaySong(
+                                        song3rd.toSong(),
+                                        favoriteSongs.map { it.song.toSong() })
+                                )
+                        },
+                    type = "artist"
+                )
+            }
+        }
+    }
+
 }
 
 
@@ -442,7 +501,6 @@ fun SearchHistorySection(
                         .height(100.dp)
                         .clickable {
                             onSearchEvent(SearchBoxEvent.Search(history.text))
-//                            onEvent(MainUiEvent.Search(history.text))
                         }
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
