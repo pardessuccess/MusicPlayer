@@ -22,10 +22,11 @@ import androidx.compose.ui.unit.dp
 import com.pardess.musicplayer.domain.model.Album
 import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.presentation.artist.album.AlbumItem
-import com.pardess.musicplayer.presentation.artist.detail.DetailArtistUiEvent
 import com.pardess.musicplayer.presentation.component.SongItem
+import com.pardess.musicplayer.ui.theme.PointColor
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.LazyVerticalGridScrollbar
+import my.nanihadesuka.compose.ScrollbarSettings
 
 
 @Composable
@@ -36,6 +37,11 @@ fun ArtistAlbumsSection(
 ) {
     LazyVerticalGridScrollbar(
         state = albumListState,
+        settings = ScrollbarSettings.Default.copy(
+            thumbThickness = 20.dp,
+            enabled = albums.size > 20,
+            thumbUnselectedColor = PointColor
+        )
     ) {
         LazyVerticalGrid(
             state = albumListState,

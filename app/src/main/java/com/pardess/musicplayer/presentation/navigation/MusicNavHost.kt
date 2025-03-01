@@ -123,8 +123,8 @@ fun MusicNavHost(
     }
 
     val systemUiController = rememberSystemUiController()
-    LaunchedEffect(playbackUiState.value.expand) {
-        if (playbackUiState.value.expand) {
+    LaunchedEffect(bottomBarHeight) {
+        if (bottomBarHeight == navigationBarHeight) {
             systemUiController.setSystemBarsColor(
                 color = Color.White, // 원하는 색상
             )
