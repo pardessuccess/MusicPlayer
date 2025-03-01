@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -171,35 +173,38 @@ fun RowAlbumItem(
     album: Album,
     onClickAlbum: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .width(150.dp)
-            .clickable {
-                onClickAlbum()
-            },
-        horizontalAlignment = Alignment.CenterHorizontally
+    Card(
+
     ) {
-        MusicImage(
-            filePath = album.songs.first().data,
+        Column(
             modifier = Modifier
-                .size(150.dp)
-                .aspectRatio(1f),
-            type = "artist"
-        )
+                .clip(RoundedCornerShape(12.dp))
+                .width(150.dp)
+                .clickable {
+                    onClickAlbum()
+                },
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            MusicImage(
+                filePath = album.songs.first().data,
+                modifier = Modifier
+                    .size(150.dp)
+                    .aspectRatio(1f),
+                type = "artist"
+            )
 
-        Text(
-            text = album.title,
-            color = Color.Black,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .padding(8.dp),
-            maxLines = 2,
-            minLines = 2
-        )
+            Text(
+                text = album.title,
+                color = Color.Black,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(8.dp),
+                maxLines = 2,
+                minLines = 2
+            )
+        }
     }
-
 }
 
 
@@ -208,32 +213,36 @@ fun AlbumItem(
     album: Album,
     onClickAlbum: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(PointColor)
-            .clickable {
-                onClickAlbum()
-            },
-        horizontalAlignment = Alignment.CenterHorizontally
+    Card(
+        elevation = CardDefaults.elevatedCardElevation(2.dp)
     ) {
-        MusicImage(
-            filePath = album.songs.first().data,
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .aspectRatio(1f),
-            type = "artist"
-        )
+                .clip(RoundedCornerShape(12.dp))
+                .background(PointColor)
+                .clickable {
+                    onClickAlbum()
+                },
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            MusicImage(
+                filePath = album.songs.first().data,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .aspectRatio(1f),
+                type = "artist"
+            )
 
-        Text(
-            text = album.title,
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .padding(8.dp),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+            Text(
+                text = album.title,
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(8.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }

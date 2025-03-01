@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -59,6 +60,7 @@ fun PopularSection(
             colors = CardDefaults.cardColors(
                 containerColor = PointColor
             ),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 5.dp),
             onClick = {
 
             }
@@ -99,6 +101,7 @@ fun PopularSection(
             colors = CardDefaults.cardColors(
                 containerColor = PointColor
             ),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 5.dp),
             onClick = {
 
             }
@@ -122,7 +125,6 @@ fun PopularSection(
         Spacer(modifier = Modifier.height(8.dp))
         LazyRow(
             contentPadding = PaddingValues(6.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(albums) { album ->
                 ItemPopularAlbum(
@@ -139,22 +141,28 @@ fun ItemPopularAlbum(
     album: Album,
     onEvent: (MainUiEvent) -> Unit
 ) {
+
     Column(
         modifier = Modifier
-            .width(140.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable {
-                onEvent(MainUiEvent.Navigate(Screen.DetailArtist.route + "/${album.artistId}/${album.id}"))
-            },
+            .width(152.dp)
+            .padding(end = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        MusicImage(
-            filePath = album.songs.first().data,
-            modifier = Modifier
-                .size(140.dp)
-                .clip(RoundedCornerShape(12.dp)),
-            type = "album"
-        )
+        Card(
+            elevation = CardDefaults.elevatedCardElevation(5.dp),
+            onClick = {
+                onEvent(MainUiEvent.Navigate(Screen.DetailArtist.route + "/${album.artistId}/${album.id}"))
+            }
+        ) {
+            MusicImage(
+                filePath = album.songs.first().data,
+                modifier = Modifier
+                    .size(140.dp)
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(12.dp)),
+                type = "album"
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = album.title,
@@ -174,20 +182,26 @@ fun ItemPopularArtist(
 ) {
     Column(
         modifier = Modifier
-            .width(140.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable {
-                onEvent(MainUiEvent.Navigate(Screen.DetailArtist.route + "/${artist.id}"))
-            },
+            .width(146.dp)
+            .padding(end = 6.dp)
+            .clip(RoundedCornerShape(12.dp)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        MusicImage(
-            filePath = artist.songs.first().data,
-            modifier = Modifier
-                .size(140.dp)
-                .clip(CircleShape),
-            type = "artist"
-        )
+        Card(
+            elevation = CardDefaults.elevatedCardElevation(5.dp),
+            shape = CircleShape,
+            onClick = {
+                onEvent(MainUiEvent.Navigate(Screen.DetailArtist.route + "/${artist.id}"))
+            }
+        ) {
+            MusicImage(
+                filePath = artist.songs.first().data,
+                modifier = Modifier
+                    .size(140.dp)
+                    .clip(CircleShape),
+                type = "artist"
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = artist.name,

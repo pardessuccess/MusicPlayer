@@ -2,13 +2,10 @@ package com.pardess.musicplayer.presentation.playlist.dialog
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -21,10 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,11 +27,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,6 +39,7 @@ import com.pardess.musicplayer.presentation.component.MusicImage
 import com.pardess.musicplayer.presentation.component.TwoBottomButton
 import com.pardess.musicplayer.presentation.playlist.detail.DetailPlaylistUiEvent
 import com.pardess.musicplayer.presentation.toPlaylistSong
+import com.pardess.musicplayer.ui.theme.Gray300
 import com.pardess.musicplayer.ui.theme.PointColor
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
@@ -74,13 +66,13 @@ fun AddSongToPlaylistDialog(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .weight(1f)
                     .fillMaxHeight(0.9f)
             ) {
                 Spacer(modifier = Modifier.height(5.dp))
                 Text("음악 등록", fontSize = 45.sp)
                 Spacer(modifier = Modifier.height(5.dp))
                 LazyColumnScrollbar(
+                    modifier = Modifier.weight(1f),
                     state = lazyListState,
                     settings = ScrollbarSettings.Default.copy(
                         thumbThickness = 20.dp,
@@ -90,14 +82,12 @@ fun AddSongToPlaylistDialog(
                 ) {
                     LazyColumn(
                         state = lazyListState,
-                        modifier = Modifier
-                            .weight(1f),
                         contentPadding = PaddingValues(4.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         items(songs.size) { index ->
                             var checked by rememberSaveable { mutableStateOf(false) }
-                            SongComponent(
+                            SelectedSongItem(
                                 checked = checked,
                                 setChecked = {
                                     checked = it
@@ -116,6 +106,7 @@ fun AddSongToPlaylistDialog(
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 TwoBottomButton(
+                    modifier = Modifier,
                     text1 = "등록",
                     text2 = "뒤로",
                     onClick1 = {
@@ -132,13 +123,13 @@ fun AddSongToPlaylistDialog(
 }
 
 @Composable
-fun SongComponent(
+fun SelectedSongItem(
     checked: Boolean,
     setChecked: (Boolean) -> Unit,
     song: Song
 ) {
     val backgroundColor by animateColorAsState(
-        targetValue = if (checked) PointColor else Color.LightGray, label = ""
+        targetValue = if (checked) PointColor else Gray300, label = ""
     )
     val borderSize by animateDpAsState(
         targetValue = if (checked) 0.dp else 1.dp, label = ""
@@ -196,39 +187,5 @@ fun SongComponent(
                 )
             }
         }
-    }
-}
-
-@Composable
-fun CustomCheckbox(
-    isChecked: Boolean,
-    checkedColor: Color = Color(0xFF03A9F4),
-    uncheckedColor: Color = Color(0xFFCCCCCC),
-    size: Int = 24
-) {
-
-    val backgroundColor by animateColorAsState(
-        targetValue = if (isChecked) checkedColor else uncheckedColor, label = ""
-    )
-
-    val iconAlpha by animateFloatAsState(
-        targetValue = if (isChecked) 1f else 0f, label = ""
-    )
-
-    Box(
-        modifier = Modifier
-            .size(size.dp)
-            .background(color = backgroundColor, shape = CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            imageVector = Icons.Filled.Check,
-            contentDescription = "Check Icon",
-            modifier = Modifier
-                .size((size * 0.7).dp)
-                .alpha(iconAlpha),
-            contentScale = ContentScale.Fit,
-            colorFilter = ColorFilter.tint(Color.White)
-        )
     }
 }

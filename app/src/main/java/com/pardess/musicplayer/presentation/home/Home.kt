@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -18,7 +17,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,10 +24,8 @@ import androidx.compose.ui.unit.sp
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.presentation.component.AutoResizeText
 import com.pardess.musicplayer.presentation.component.FontSizeRange
-import com.pardess.musicplayer.ui.theme.NavBackgroundColor
-import com.pardess.musicplayer.ui.theme.NavSelectedBackgroundColor
+import com.pardess.musicplayer.ui.theme.PointBackgroundColor
 import com.pardess.musicplayer.ui.theme.PointColor
-import com.pardess.musicplayer.ui.theme.TextColor
 
 enum class HomeScreen(
     val title: String,
@@ -87,21 +83,21 @@ fun NavigationBarItem(
     Column(
         modifier = modifier
             .clickable { onClick() }
-            .background(if (isSelected) NavSelectedBackgroundColor else PointColor)
+            .background(if (isSelected) PointBackgroundColor else PointColor)
             .height(100.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             modifier = Modifier.size(48.dp),
-            tint = if (isSelected) PointColor else NavSelectedBackgroundColor,
+            tint = if (isSelected) PointColor else PointBackgroundColor,
             painter = painterResource(id = icon),
             contentDescription = "navigation icon $icon",
         )
         AutoResizeText(
             text = title,
             fontSizeRange = FontSizeRange(30.sp, 160.sp),
-            color = if (isSelected) PointColor else NavSelectedBackgroundColor,
+            color = if (isSelected) PointColor else PointBackgroundColor,
             fontWeight = FontWeight.Bold,
         )
     }

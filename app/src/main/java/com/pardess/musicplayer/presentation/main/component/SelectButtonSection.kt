@@ -49,7 +49,7 @@ fun SelectButtonSection(
                 colors = CardDefaults.cardColors(
                     containerColor = PointColor
                 ),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 5.dp),
                 onClick = {
                     onEvent(MainUiEvent.Navigate(Screen.Favorite.route))
                 }
@@ -73,7 +73,7 @@ fun SelectButtonSection(
                 modifier = Modifier
                     .weight(1f)
                     .height(100.dp),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 5.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = PointColor
                 ),
@@ -106,7 +106,7 @@ fun SelectButtonSection(
                 colors = CardDefaults.cardColors(
                     containerColor = PointColor
                 ),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 5.dp),
                 onClick = {
                     onEvent(MainUiEvent.Navigate(Screen.History.route))
                 }
@@ -129,7 +129,7 @@ fun SelectButtonSection(
                 modifier = Modifier
                     .weight(1f)
                     .height(100.dp),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 5.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = PointColor
                 ),

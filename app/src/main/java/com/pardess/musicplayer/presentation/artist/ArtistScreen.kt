@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -41,6 +39,7 @@ import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.NavigationBarHeight
 import com.pardess.musicplayer.ui.theme.PointColor
 import com.pardess.musicplayer.ui.theme.PointColor3
+import com.pardess.musicplayer.ui.theme.TextColor
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
 
@@ -76,8 +75,8 @@ fun ArtistScreen(
                     columns = GridCells.Fixed(2),
                     modifier = Modifier,
                     contentPadding = PaddingValues(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(artistState.value) { artist ->
                         ArtistItem(
@@ -105,12 +104,12 @@ fun ArtistItem(
     onClickArtist: () -> Unit
 ) {
     Card(
-        elevation = CardDefaults.elevatedCardElevation(4.dp)
+        elevation = CardDefaults.elevatedCardElevation(5.dp)
     ) {
         Column(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
-                .background(PointColor3)
+                .background(PointColor)
                 .clickable {
                     onClickArtist()
                 },
@@ -133,7 +132,7 @@ fun ArtistItem(
 
             Text(
                 text = artist.name,
-                color = Color.Black,
+                color = TextColor,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
