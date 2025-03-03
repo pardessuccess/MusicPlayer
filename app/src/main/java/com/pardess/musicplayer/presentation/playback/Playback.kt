@@ -1,5 +1,6 @@
 package com.pardess.musicplayer.presentation.playback
 
+import android.graphics.Point
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
@@ -58,7 +59,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.domain.model.Song
-import com.pardess.musicplayer.domain.model.enums.PlayerState
 import com.pardess.musicplayer.presentation.component.CustomSlider
 import com.pardess.musicplayer.presentation.component.CustomSliderDefaults
 import com.pardess.musicplayer.presentation.component.FullWidthButton
@@ -82,7 +82,7 @@ fun Playback(
     setShuffleMode: () -> Unit,
     onPlaybackUiEvent: (PlaybackEvent) -> Unit,
 ) {
-    if (playbackUiState.playState.currentSong == null) return // 🎵 현재 재생 중인 노래가 없으면 UI 숨김
+    if (playbackUiState.playerState.currentSong == null) return // 🎵 현재 재생 중인 노래가 없으면 UI 숨김
 
     var offsetX by remember { mutableFloatStateOf(0f) }
 
@@ -98,16 +98,14 @@ fun Playback(
     var iconResId by remember { mutableIntStateOf(R.drawable.ic_round_pause) }
 
 
-    when (playbackUiState.playState.playerState) {
-        PlayerState.PLAYING -> {
+    when (playbackUiState.playerState.isPlaying) {
+        true -> {
             iconResId = R.drawable.ic_round_pause
         }
 
-        PlayerState.PAUSED, PlayerState.STOPPED -> {
+        false -> {
             iconResId = R.drawable.ic_round_play_arrow
         }
-
-        PlayerState.LOADING, null -> {}
     }
 
     BackHandler(enabled = playbackUiState.expand) {
@@ -154,9 +152,9 @@ fun Playback(
             HomeBottomBarItem(
                 barHeight = barHeight,
                 expand = barHeight > screenHeight / 2,
-                song = playbackUiState.playState.currentSong,
-                currentTime = playbackUiState.playState.currentPosition,
-                totalTime = playbackUiState.playState.totalDuration,
+                song = playbackUiState.playerState.currentSong,
+                currentTime = playbackUiState.playerState.currentPosition.toMillis(),
+                totalTime = playbackUiState.playerState.currentSong.duration.toMillis(),
                 iconResId = iconResId,
                 onBarClick = onBarClick,
                 onSliderChange = onSliderChange,
@@ -165,8 +163,8 @@ fun Playback(
                 playPreviousSong = playPreviousSong,
                 setRepeatMode = setRepeatMode,
                 setShuffleMode = setShuffleMode,
-                isShuffleEnabled = playbackUiState.playState.isShuffleEnabled,
-                repeatMode = playbackUiState.playState.repeatMode,
+                isShuffleEnabled = playbackUiState.playerState.shuffle,
+                repeatMode = playbackUiState.playerState.repeatMode,
                 onFavoriteClick = onFavoriteClick
             )
         }
@@ -201,7 +199,7 @@ fun HomeBottomBarItem(
         targetValue = if (expand) {
             15.dp
         } else {
-            2.dp
+            4.dp
         },
         animationSpec = tween(400), label = ""
     )
@@ -210,7 +208,7 @@ fun HomeBottomBarItem(
         targetValue = if (expand) {
             20.dp
         } else {
-            2.dp
+            4.dp
         },
         animationSpec = tween(400), label = ""
     )
@@ -234,15 +232,18 @@ fun HomeBottomBarItem(
             horizontalArrangement = if (!expand) Arrangement.SpaceBetween else Arrangement.Center,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Box {
+            Box(
+                modifier = Modifier.background(PointBackgroundColor)
+            ) {
                 MusicImage(
                     filePath = song.data,
                     modifier = Modifier
+                        .background(if (expand) Color.White else PointBackgroundColor)
                         .padding(
                             start = horizontalPadding,
                             top = topPadding,
                             end = horizontalPadding,
-                            bottom = 2.dp
+                            bottom = 4.dp
                         )
                         .aspectRatio(1f),
                 )

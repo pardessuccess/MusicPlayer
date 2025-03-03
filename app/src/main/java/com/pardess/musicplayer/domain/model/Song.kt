@@ -1,11 +1,13 @@
 package com.pardess.musicplayer.domain.model
 
+import java.time.Duration
+
 data class Song(
     val id: Long,
     val title: String,
     val trackNumber: Int,
     val year: Int,
-    val duration: Long,
+    val duration: Duration = Duration.ofSeconds(0),
     val data: String,
     val dateModified: Long,
     val albumId: Long,
@@ -24,7 +26,7 @@ data class Song(
             title = "",
             trackNumber = -1,
             year = -1,
-            duration = -1,
+            duration = Duration.ofSeconds(0),
             data = "",
             dateModified = -1,
             albumId = -1,

@@ -5,7 +5,6 @@ import android.content.ContentResolver
 import android.content.Context
 import androidx.room.Room
 import com.pardess.musicplayer.data.datasource.database.MIGRATION_1_2
-import com.pardess.musicplayer.data.repository.MusicRepositoryImpl
 import com.pardess.musicplayer.data.datasource.database.MusicDatabase
 import com.pardess.musicplayer.data.datasource.database.dao.FavoriteDao
 import com.pardess.musicplayer.data.datasource.database.dao.HistoryDao
@@ -16,17 +15,16 @@ import com.pardess.musicplayer.data.datasource.database.dao.SongDao
 import com.pardess.musicplayer.data.datasource.datastore.UserPreferences
 import com.pardess.musicplayer.data.datasource.datastore.UserPreferencesImpl
 import com.pardess.musicplayer.data.repository.ManageRepositoryImpl
+import com.pardess.musicplayer.data.repository.MusicRepositoryImpl
 import com.pardess.musicplayer.data.repository.PlaylistRepositoryImpl
 import com.pardess.musicplayer.data.repository.PrefRepositoryImpl
 import com.pardess.musicplayer.data.repository.SearchRepositoryImpl
-import com.pardess.musicplayer.data.service.MusicControllerImpl
-import com.pardess.musicplayer.data.service.notification.PlaybackNotificationOver24
+//import com.pardess.musicplayer.data.service.notification.PlaybackNotificationOver24
 import com.pardess.musicplayer.domain.repository.ManageRepository
 import com.pardess.musicplayer.domain.repository.MusicRepository
 import com.pardess.musicplayer.domain.repository.PlaylistRepository
 import com.pardess.musicplayer.domain.repository.PrefRepository
 import com.pardess.musicplayer.domain.repository.SearchRepository
-import com.pardess.musicplayer.domain.service.MusicController
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -117,10 +115,12 @@ object AppModule {
         return PrefRepositoryImpl(userPreferences)
     }
 
-    @Provides
-    @Singleton
-    fun provideMusicController(@ApplicationContext context: Context): MusicController =
-        MusicControllerImpl(context)
+
+
+//    @Provides
+//    @Singleton
+//    fun provideMusicController(@ApplicationContext context: Context): MusicController =
+//        MusicControllerImpl(context)
 
     @Provides
     @Singleton
@@ -128,13 +128,12 @@ object AppModule {
         return UserPreferencesImpl(context)
     }
 
-    @Provides
-    @Singleton
-    fun provideNotification(
-        @ApplicationContext context: Context,
-        musicController: MusicController
-    ): PlaybackNotificationOver24 {
-        return PlaybackNotificationOver24(context, musicController)
-    }
-
+//    @Provides
+//    @Singleton
+//    fun provideNotification(
+//        @ApplicationContext context: Context,
+//        musicController: MusicController
+//    ): PlaybackNotificationOver24 {
+//        return PlaybackNotificationOver24(context, musicController)
+//    }
 }
