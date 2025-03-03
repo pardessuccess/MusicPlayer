@@ -393,7 +393,7 @@ fun Top3SongsSection(
     favoriteSongs: List<FavoriteSong>,
     bigIconSize: Dp,
     smallIconSize: Dp,
-    ) {
+) {
     Row(
         modifier = Modifier.wrapContentHeight(),
         horizontalArrangement = Arrangement.Center
@@ -411,7 +411,7 @@ fun Top3SongsSection(
                         if (song1st != null) {
                             onPlaybackEvent(
                                 PlaybackEvent.PlaySong(
-                                    song1st.toSong(),
+                                    0,
                                     favoriteSongs.map { it.song.toSong() })
                             )
                         }
@@ -439,7 +439,7 @@ fun Top3SongsSection(
                             if (song2nd != null) {
                                 onPlaybackEvent(
                                     PlaybackEvent.PlaySong(
-                                        song2nd.toSong(),
+                                        1,
                                         favoriteSongs.map { it.song.toSong() })
                                 )
                             }
@@ -462,7 +462,7 @@ fun Top3SongsSection(
                             if (song3rd != null)
                                 onPlaybackEvent(
                                     PlaybackEvent.PlaySong(
-                                        song3rd.toSong(),
+                                        2,
                                         favoriteSongs.map { it.song.toSong() })
                                 )
                         },

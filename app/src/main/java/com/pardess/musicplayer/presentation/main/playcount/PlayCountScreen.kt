@@ -99,7 +99,7 @@ fun PlayCountSongList(
                     onClick = {
                         onPlaybackEvent(
                             PlaybackEvent.PlaySong(
-                                playCountSong.song.toSong(),
+                                playCountSongs.indexOf(playCountSong),
                                 playCountSongs.map { it.song.toSong() }
                             )
                         )

@@ -4,7 +4,7 @@ import com.pardess.musicplayer.domain.model.Song
 
 sealed class PlaybackEvent {
     data class PlaySong(
-        val song: Song,
+        val index: Int,
         val playlist: List<Song>
     ) : PlaybackEvent()
 

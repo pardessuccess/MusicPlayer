@@ -19,8 +19,9 @@ enum class Screen(
 enum class Navigation(
     val route: String,
 ) {
-    HomeNavigation("home_route"),
-    MainNavigation("main_route"),
-    PlaylistNavigation("playlist_route"),
-    ArtistNavigation("artist_route"),
+    Home("home_route"),
+    Main("main_route"),
+    Playlist("playlist_route"),
+    Artist("artist_route"),
+    Songs("songs_route"),
 }
