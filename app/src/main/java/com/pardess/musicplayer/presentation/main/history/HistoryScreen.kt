@@ -102,7 +102,7 @@ fun HistorySongList(
                     onClick = {
                         onPlaybackEvent(
                             PlaybackEvent.PlaySong(
-                                historySong.song.toSong(),
+                                historySongs.indexOf(historySong),
                                 historySongs.map { it.song.toSong() }
                             )
                         )

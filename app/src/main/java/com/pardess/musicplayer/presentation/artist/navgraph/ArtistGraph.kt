@@ -1,4 +1,4 @@
-package com.pardess.musicplayer.presentation.navigation.navgraph
+package com.pardess.musicplayer.presentation.artist.navgraph
 
 import androidx.compose.runtime.State
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,7 +28,7 @@ fun NavGraphBuilder.artistGraph(
     allSongState: State<List<Song>>,
 ) {
     navigation(
-        route = Navigation.ArtistNavigation.route,
+        route = Navigation.Artist.route,
         startDestination = HomeScreen.Artist.route,
     ) {
         composable(HomeScreen.Artist.route) {

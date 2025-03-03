@@ -23,7 +23,6 @@ import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.presentation.home.HomeScreen
 import com.pardess.musicplayer.presentation.main.MainScreen
 import com.pardess.musicplayer.presentation.main.MainUiEffect
-import com.pardess.musicplayer.presentation.main.MainUiEvent
 import com.pardess.musicplayer.presentation.main.MainViewModel
 import com.pardess.musicplayer.presentation.main.favorite.FavoriteUiEffect
 import com.pardess.musicplayer.presentation.main.favorite.FavoriteScreen
@@ -52,7 +51,7 @@ fun NavGraphBuilder.mainGraph(
     onMainEvent: (SearchBoxEvent) -> Unit,
 ) {
     navigation(
-        route = Navigation.MainNavigation.route,
+        route = Navigation.Main.route,
         startDestination = HomeScreen.Main.route,
     ) {
         composable(HomeScreen.Main.route) {
@@ -203,7 +202,7 @@ fun NavGraphBuilder.mainGraph(
                     viewModel.onEvent(
                         event = event,
                         onPlaybackEvent = { song, songs ->
-                            onPlaybackEvent(PlaybackEvent.PlaySong(song, songs))
+                            onPlaybackEvent(PlaybackEvent.PlaySong(songs.indexOf(song), songs))
                         },
                         onNavigateToRoute = onNavigateToRoute
                     )

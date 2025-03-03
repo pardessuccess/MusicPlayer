@@ -38,21 +38,19 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.pardess.musicplayer.domain.model.Album
-import com.pardess.musicplayer.domain.model.Artist
-import com.pardess.musicplayer.domain.model.enums.PlayerState
 import com.pardess.musicplayer.presentation.home.HomeEvent
 import com.pardess.musicplayer.presentation.home.HomeUiState
 import com.pardess.musicplayer.presentation.home.HomeViewModel
-import com.pardess.musicplayer.presentation.navigation.navgraph.artistGraph
+import com.pardess.musicplayer.presentation.artist.navgraph.artistGraph
 import com.pardess.musicplayer.presentation.main.navgraph.mainGraph
-import com.pardess.musicplayer.presentation.navigation.navgraph.playlistGraph
+import com.pardess.musicplayer.presentation.playlist.navgraph.playlistGraph
 import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxEvent
 import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxState
 import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxViewModel
 import com.pardess.musicplayer.presentation.playback.Playback
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.playback.PlaybackViewModel
+import com.pardess.musicplayer.presentation.songs.navgraph.songsGraph
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.PointColor
 
@@ -155,12 +153,12 @@ fun MusicNavHost(
                 modifier = Modifier
                     .padding(
                         top = it.calculateTopPadding(),
-                        bottom = if (playbackUiState.value.playState.currentSong != null) 116.dp else 0.dp
+                        bottom = if (playbackUiState.value.playerState.currentSong != null) 116.dp else 0.dp
                     )
             ) {
                 NavHost(
                     navController = navController.navController,
-                    startDestination = Navigation.HomeNavigation.route,
+                    startDestination = Navigation.Home.route,
                 ) {
                     navGraph(
                         navController = navController.navController,
@@ -198,7 +196,7 @@ fun MusicNavHost(
                         playbackViewModel.onEvent(PlaybackEvent.ExpandPanel)
                     },
                     playOrToggleSong = {
-                        if (playbackUiState.value.playState.playerState == PlayerState.PLAYING)
+                        if (playbackUiState.value.playerState.isPlaying)
                             playbackViewModel.onEvent(PlaybackEvent.PauseSong)
                         else
                             playbackViewModel.onEvent(PlaybackEvent.ResumeSong)
@@ -233,8 +231,8 @@ fun NavGraphBuilder.navGraph(
     onHomeEvent: (HomeEvent) -> Unit
 ) {
     navigation(
-        route = Navigation.HomeNavigation.route,
-        startDestination = Navigation.MainNavigation.route,
+        route = Navigation.Home.route,
+        startDestination = Navigation.Main.route,
     ) {
         mainGraph(
             onNavigateToRoute = { route -> onNavigateToRoute(route) },
@@ -256,14 +254,12 @@ fun NavGraphBuilder.navGraph(
             onPlaybackEvent = onPlaybackEvent,
             allSongState = allSongState,
         )
-        composable(HomeScreen.Songs.route) {
-            SongsScreen(
-                navigateToRoute = { route -> onNavigateToRoute(route) },
-                upPress = upPress,
-                songState = allSongState,
-                onPlaybackEvent = onPlaybackEvent
-            )
-        }
+        songsGraph(
+            onNavigateToRoute = { route -> onNavigateToRoute(route) },
+            upPress = upPress,
+            onPlaybackEvent = onPlaybackEvent,
+            allSongState = allSongState,
+        )
     }
 }
 

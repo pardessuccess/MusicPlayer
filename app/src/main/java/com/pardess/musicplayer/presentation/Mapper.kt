@@ -3,13 +3,14 @@ package com.pardess.musicplayer.presentation
 import com.pardess.musicplayer.data.entity.PlaylistSong
 import com.pardess.musicplayer.data.entity.SongEntity
 import com.pardess.musicplayer.domain.model.Song
+import java.time.Duration
 
 fun Song.toEntity(): SongEntity {
     return SongEntity(
         id = this.id,
         title = this.title,
         year = this.year,
-        duration = this.duration,
+        duration = this.duration.toMillis(),
         data = this.data,
         albumId = this.albumId,
         albumName = this.albumName,
@@ -24,7 +25,7 @@ fun SongEntity.toSong(): Song {
         title = this.title,
         trackNumber = -1, // SongEntity에는 없으므로 기본값 설정
         year = this.year,
-        duration = this.duration,
+        duration = Duration.ofSeconds(this.duration),
         data = this.data,
         dateModified = System.currentTimeMillis(), // 수정 시간이 없으므로 현재 시간
         albumId = this.albumId,

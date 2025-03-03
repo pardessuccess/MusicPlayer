@@ -40,7 +40,6 @@ import com.pardess.musicplayer.presentation.component.SongItem
 import com.pardess.musicplayer.presentation.navigation.Screen
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.ui.theme.PointColor
-import com.pardess.musicplayer.utils.Utils.toTime
 
 
 @Composable
@@ -59,7 +58,7 @@ fun DetailAlbumScreen(
                 val album = (uiState.value.albumState as UiState.Success<Album>).data
                 val albums = (uiState.value.albumsState as UiState.Success<List<Album>>).data
 
-                val fullTime = album.songs.sumOf { it.duration }.toTime()
+                val fullTime = "album.songs.sumOf { it.duration }.toTime()"
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -110,7 +109,12 @@ fun DetailAlbumScreen(
                         SongItem(
                             song = song,
                             onClick = {
-                                onPlaybackEvent(PlaybackEvent.PlaySong(song, album.songs))
+                                onPlaybackEvent(
+                                    PlaybackEvent.PlaySong(
+                                        album.songs.indexOf(song),
+                                        album.songs
+                                    )
+                                )
                             }
                         )
                     }

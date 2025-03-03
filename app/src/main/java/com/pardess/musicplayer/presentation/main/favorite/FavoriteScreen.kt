@@ -102,7 +102,7 @@ fun FavoriteSongList(
                     onClick = {
                         onPlaybackEvent(
                             PlaybackEvent.PlaySong(
-                                favoriteSong.song.toSong(),
+                                favoriteSongs.indexOf(favoriteSong),
                                 favoriteSongs.map { it.song.toSong() }
                             )
                         )

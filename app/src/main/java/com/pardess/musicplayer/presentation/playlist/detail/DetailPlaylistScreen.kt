@@ -121,8 +121,8 @@ fun PlaylistDetailScreen(
                                 } else {
                                     onPlaybackEvent(
                                         PlaybackEvent.PlaySong(
-                                            song = playlistSong.song.toSong(),
-                                            playlist = playlistSongs.map { it.song.toSong() })
+                                            playlistSongs.indexOf(playlistSong),
+                                            playlistSongs.map { it.song.toSong() })
                                     )
                                 }
                             },

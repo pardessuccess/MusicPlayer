@@ -32,13 +32,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.pardess.musicplayer.domain.model.state.RepeatMode
 import com.pardess.musicplayer.presentation.UiState
 import com.pardess.musicplayer.presentation.artist.detail.component.ArtistAlbumsSection
 import com.pardess.musicplayer.presentation.artist.detail.component.ArtistSongsSection
 import com.pardess.musicplayer.presentation.artist.detail.component.HorizontalPagerIndicator
-import com.pardess.musicplayer.presentation.component.TwoBottomButton
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
+import com.pardess.musicplayer.presentation.playback.RepeatMode
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -128,7 +127,11 @@ fun DetailArtistScreen(
                                 songs = songsState.data,
                                 songListState = songListState,
                                 onSongClick = { song ->
-                                    onPlaybackEvent(PlaybackEvent.PlaySong(song, songsState.data))
+                                    onPlaybackEvent(
+                                        PlaybackEvent.PlaySong(
+                                            songsState.data.indexOf(song), songsState.data
+                                        )
+                                    )
                                     onPlaybackEvent(PlaybackEvent.RepeatMode(RepeatMode.REPEAT_ALL.value))
                                 }
                             )

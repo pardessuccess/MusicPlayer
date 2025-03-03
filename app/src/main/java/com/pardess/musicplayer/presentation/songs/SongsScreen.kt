@@ -67,8 +67,8 @@ fun SongsScreen(
                             onClick = {
                                 onPlaybackEvent(
                                     PlaybackEvent.PlaySong(
-                                        song = song,
-                                        playlist = songState.value
+                                        songState.value.indexOf(song),
+                                        songState.value
                                     )
                                 )
                             }

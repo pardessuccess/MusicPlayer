@@ -7,6 +7,7 @@ import com.pardess.musicplayer.data.entity.SearchHistoryEntity
 import com.pardess.musicplayer.domain.model.SearchHistory
 import com.pardess.musicplayer.domain.model.SearchType
 import com.pardess.musicplayer.domain.model.Song
+import java.time.Duration
 
 
 // MediaItem → Song 변환
@@ -19,7 +20,7 @@ fun MediaItem.toSong(): Song {
         title = mediaMetadata.title?.toString() ?: "",
         trackNumber = extras?.getInt("trackNumber") ?: 0,
         year = extras?.getInt("year") ?: 0,
-        duration = extras?.getLong("duration") ?: mediaMetadata.durationMs ?: 10000L,
+        duration = Duration.ofMillis((mediaMetadata.durationMs ?: 10000L) / 1000),
         data = localConfiguration?.uri?.toString() ?: "",
         dateModified = extras?.getLong("dateModified") ?: 0L,
         albumId = extras?.getLong("albumId") ?: 0L,

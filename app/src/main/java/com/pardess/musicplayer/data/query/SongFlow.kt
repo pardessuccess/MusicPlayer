@@ -3,7 +3,6 @@ package com.pardess.musicplayer.data.query
 import android.content.ContentResolver
 import android.database.Cursor
 import android.os.Bundle
-import android.os.CancellationSignal
 import android.provider.MediaStore
 import com.pardess.musicplayer.Constants.songProjection
 import com.pardess.musicplayer.IS_MUSIC
@@ -13,6 +12,7 @@ import com.pardess.musicplayer.utils.Utils.isOverR
 import com.pardess.musicplayer.utils.queryFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.Duration
 
 class SongFlow(
     private val contentResolver: ContentResolver,
@@ -60,7 +60,7 @@ class SongFlow(
                             title = title,
                             trackNumber = trackNumber,
                             year = year,
-                            duration = duration,
+                            duration = Duration.ofSeconds(duration),
                             data = data,
                             dateModified = dateModified,
                             albumId = albumId,
