@@ -1,65 +1,78 @@
 package com.pardess.musicplayer.presentation.playlist
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pardess.musicplayer.data.entity.PlaylistEntity
-import com.pardess.musicplayer.data.entity.PlaylistSong
 import com.pardess.musicplayer.domain.repository.PlaylistRepository
+import com.pardess.musicplayer.presentation.base.BaseUiEffect
+import com.pardess.musicplayer.presentation.base.BaseUiEvent
+import com.pardess.musicplayer.presentation.base.BaseUiState
+import com.pardess.musicplayer.presentation.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+
+data class PlaylistUiState(
+    val selectedPlaylist: PlaylistEntity? = null,
+    val playlists: List<PlaylistEntity> = emptyList(),
+    val selectedPlaylistIds: List<Long> = emptyList(),
+    val deleteMode: Boolean = false,
+    val isShowCreateDialog: Boolean = false,
+) : BaseUiState
+
+sealed class PlaylistUiEvent : BaseUiEvent {
+    data class ChangePlaylistOrder(val changedPlaylists: List<PlaylistEntity>) : PlaylistUiEvent()
+    data class SetShowPlaylistDialog(val isShow: Boolean) : PlaylistUiEvent()
+    data class CreatePlaylist(val playlistName: String) : PlaylistUiEvent()
+    data class TogglePlaylistSelection(val playlist: PlaylistEntity, val isSelected: Boolean) :
+        PlaylistUiEvent()
+    object DeletePlaylists : PlaylistUiEvent()
+    object ToggleDeleteMode : PlaylistUiEvent()
+    data class Navigate(val route: String) : PlaylistUiEvent()
+    data class ShowToast(val message: String) : PlaylistUiEvent()
+}
+
+sealed class PlaylistUiEffect : BaseUiEffect {
+    data class Navigate(val route: String) : PlaylistUiEffect()
+    data class ShowToast(val message: String) : PlaylistUiEffect()
+}
+
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
-) : ViewModel() {
+) : BaseViewModel<PlaylistUiState, PlaylistUiEvent, PlaylistUiEffect>(PlaylistUiState()) {
 
-    private val playlists = playlistRepository.getAllPlaylist().map { list ->
-        list.sortedWith(compareBy<PlaylistEntity> { it.pinnedAt != null }.thenBy { it.pinnedAt })
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(),
-        initialValue = emptyList()
-    )
+    private val playlists = playlistRepository.getAllPlaylist()
+        .map { list -> list.sortedWith(compareBy<PlaylistEntity> { it.pinnedAt != null }.thenBy { it.pinnedAt }) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = emptyList()
+        )
 
-    private val _uiState = MutableStateFlow(PlaylistUiState())
-    val uiState = combine(_uiState, playlists) { baseState, playlists ->
-        baseState.copy(playlists = playlists)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(),
-        initialValue = PlaylistUiState()
-    )
+    init {
+        collectState(playlists) { playlists ->
+            copy(playlists = playlists)
+        }
+    }
 
-    fun onEvent(event: PlaylistUiEvent) {
+    override fun onEvent(event: PlaylistUiEvent) {
         when (event) {
-            is PlaylistUiEvent.SetShowPlaylistDialog -> {
-                _uiState.value = _uiState.value.copy(
-                    dialogState = _uiState.value.dialogState.copy(isShowCreatePlaylistDialog = event.isShow)
-                )
-            }
-
             is PlaylistUiEvent.TogglePlaylistSelection -> {
-                // 예시: selectedSongs 리스트에 추가하거나 제거
-                val selectedPlaylists = _uiState.value.selectedPlaylistIds.toMutableList()
+                val selectedPlaylists = uiState.value.selectedPlaylistIds.toMutableList()
                 if (event.isSelected) {
                     selectedPlaylists.add(event.playlist.playlistId)
                 } else {
                     selectedPlaylists.remove(event.playlist.playlistId)
                 }
-                _uiState.update {
-                    it.copy(
-                        selectedPlaylistIds = selectedPlaylists
-                    )
+                updateState {
+                    copy(selectedPlaylistIds = selectedPlaylists)
                 }
             }
 
@@ -73,27 +86,36 @@ class PlaylistViewModel @Inject constructor(
 
             PlaylistUiEvent.DeletePlaylists -> {
                 viewModelScope.launch {
-                    _uiState.value.selectedPlaylistIds.let {
+                    uiState.value.selectedPlaylistIds.let {
                         playlistRepository.deletePlaylistsByIds(it)
                     }
                 }
-                _uiState.update {
-                    it.copy(
+                updateState {
+                    copy(
                         selectedPlaylistIds = emptyList(),
                         deleteMode = false
                     )
                 }
             }
 
-            is PlaylistUiEvent.SetShowDeletePlaylistDialog -> {
-                _uiState.value = _uiState.value.copy(
-                    selectedPlaylist = event.playlistEntity,
-                    dialogState = _uiState.value.dialogState.copy(isShowDeletePlaylistDialog = event.isShow)
-                )
+            PlaylistUiEvent.ToggleDeleteMode -> {
+                updateState {
+                    copy(deleteMode = !deleteMode)
+                }
             }
 
-            PlaylistUiEvent.ToggleDeleteMode -> {
-                _uiState.value = _uiState.value.copy(deleteMode = !_uiState.value.deleteMode)
+            is PlaylistUiEvent.SetShowPlaylistDialog -> {
+                updateState {
+                    copy(isShowCreateDialog = event.isShow)
+                }
+            }
+
+            is PlaylistUiEvent.Navigate -> {
+                sendEffect(PlaylistUiEffect.Navigate(event.route))
+            }
+
+            is PlaylistUiEvent.ShowToast -> {
+                sendEffect(PlaylistUiEffect.ShowToast(event.message))
             }
         }
     }
@@ -107,9 +129,9 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    private fun createPlaylist(playlistName: String) =
+    private fun createPlaylist(playlistName: String) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
+            val newPlaylist = withContext(Dispatchers.IO) {
                 val currentPlaylists =
                     playlistRepository.getAllPlaylist().firstOrNull() ?: emptyList()
                 val newDisplayOrder = currentPlaylists.size
@@ -117,30 +139,11 @@ class PlaylistViewModel @Inject constructor(
                     playlistName = playlistName,
                     displayOrder = newDisplayOrder,
                 )
-                _uiState.value = _uiState.value.copy(
-                    selectedPlaylist = playlistRepository.createPlaylist(newPlaylist)
-                )
+                playlistRepository.createPlaylist(newPlaylist)
             }
-        }
-
-    fun updatePlaylistsOrder(updatedPlaylists: List<PlaylistEntity>) = viewModelScope.launch {
-        withContext(Dispatchers.IO) {
-            val modifiedPlaylists = updatedPlaylists.mapIndexedNotNull { index, playlist ->
-                if (playlist.displayOrder != index) {
-                    playlist.copy(displayOrder = index) // 새로운 순서로 변경
-                } else null
-            }
-
-            if (modifiedPlaylists.isNotEmpty()) {
-                playlistRepository.updatePlaylists(modifiedPlaylists) // ✅ 변경된 항목만 일괄 업데이트
+            updateState {
+                copy(selectedPlaylist = newPlaylist)
             }
         }
     }
-
-    fun addSongEntityToPlaylist(playlistSong: PlaylistSong) {
-        viewModelScope.launch {
-            playlistRepository.insertSongEntity(playlistSong)
-        }
-    }
-
 }

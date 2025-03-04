@@ -1,47 +1,57 @@
 package com.pardess.musicplayer.presentation.main
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pardess.musicplayer.data.entity.SongEntity
+import com.pardess.musicplayer.data.entity.join.FavoriteSong
 import com.pardess.musicplayer.domain.model.Album
 import com.pardess.musicplayer.domain.model.Artist
 import com.pardess.musicplayer.domain.model.SearchHistory
-import com.pardess.musicplayer.domain.model.SearchType
 import com.pardess.musicplayer.domain.repository.ManageRepository
 import com.pardess.musicplayer.domain.repository.SearchRepository
-import com.pardess.musicplayer.presentation.navigation.Screen
+import com.pardess.musicplayer.presentation.base.BaseViewModel
+import com.pardess.musicplayer.presentation.base.BaseUiEffect
+import com.pardess.musicplayer.presentation.base.BaseUiEvent
+import com.pardess.musicplayer.presentation.base.BaseUiState
 import com.pardess.musicplayer.presentation.toSong
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+data class MainUiState(
+    val song1st: SongEntity? = null,
+    val song2nd: SongEntity? = null,
+    val song3rd: SongEntity? = null,
+    val favoriteSongs: List<FavoriteSong> = emptyList(),
+    val popularArtists: List<Artist> = emptyList(),
+    val popularAlbums: List<Album> = emptyList(),
+    val searchHistories: List<SearchHistory> = emptyList(),
+    val showGuideText: Boolean = false
+) : BaseUiState
+
+sealed class MainUiEvent : BaseUiEvent {
+    data class Navigate(val route: String) : MainUiEvent()
+    data class RemoveSearchHistory(val id: Long) : MainUiEvent()
+}
+
+sealed class MainUiEffect : BaseUiEffect {
+    data class Navigate(val route: String) : MainUiEffect()
+}
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     manageRepository: ManageRepository,
     private val searchRepository: SearchRepository
-) : ViewModel() {
+) : BaseViewModel<MainUiState, MainUiEvent, MainUiEffect>(MainUiState()) {
 
-    private val _uiState = MutableStateFlow(MainUiState())
-    val uiState = _uiState.asStateFlow()
-
-    private val _effectChannel = Channel<MainUiEffect>(Channel.BUFFERED)
-    val effectFlow = _effectChannel.receiveAsFlow()
-
-    fun onEvent(event: MainUiEvent) {
+    override fun onEvent(event: MainUiEvent) {
         when (event) {
             is MainUiEvent.Navigate -> {
-                viewModelScope.launch {
-                    _effectChannel.send(MainUiEffect.Navigate(event.route))
-                }
+                sendEffect(MainUiEffect.Navigate(event.route))
             }
+
             is MainUiEvent.RemoveSearchHistory -> {
                 viewModelScope.launch {
                     searchRepository.deleteSearchHistory(event.id)
@@ -56,13 +66,13 @@ class MainViewModel @Inject constructor(
         emptyList()
     )
 
-    val searchHistories = searchRepository.getSearchHistory().stateIn(
+    private val searchHistories = searchRepository.getSearchHistory().stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(),
         emptyList()
     )
 
-    val popularArtists = favoriteSongs
+    private val popularArtists = favoriteSongs
         .map { favorites ->
             favorites.groupBy { it.song.artistId }
                 .map { (artistId, artistFavorites) ->
@@ -117,60 +127,23 @@ class MainViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-
-    private fun loadInfo() {
-        viewModelScope.launch {
-            favoriteSongs.collectLatest { songs ->
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        favoriteSongs = songs,
-                        song1st = if (songs.isNotEmpty()) songs[0].song else null,
-                        song2nd = if (songs.size > 1) songs[1].song else null,
-                        song3rd = if (songs.size > 2) songs[2].song else null,
-                    )
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            popularArtists.collectLatest { artistsList ->
-                _uiState.update { currentState ->
-                    if (artistsList.isNotEmpty()) {
-                        val min = minOf(artistsList.size - 1, 9)
-                        currentState.copy(popularArtists = artistsList.slice(0..min))
-                    } else {
-                        currentState.copy(popularArtists = artistsList)
-                    }
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            popularAlbums.collectLatest { albumsList ->
-                _uiState.update { currentState ->
-                    if (currentState.popularAlbums.isNotEmpty()) {
-                        val min = minOf(albumsList.size - 1, 9)
-                        currentState.copy(popularAlbums = albumsList.slice(0..min))
-                    } else {
-                        currentState.copy(popularAlbums = albumsList)
-                    }
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            searchHistories.collectLatest { searchHistories ->
-                _uiState.update { currentState ->
-                    currentState.copy(searchHistories = searchHistories)
-                }
-            }
-        }
-    }
-
-
     init {
-        loadInfo()
+        collectState(favoriteSongs) { songs ->
+            copy(
+                favoriteSongs = songs,
+                song1st = songs.getOrNull(0)?.song,
+                song2nd = songs.getOrNull(1)?.song,
+                song3rd = songs.getOrNull(2)?.song
+            )
+        }
+        collectState(popularArtists) { artistsList ->
+            copy(popularArtists = artistsList.take(10))
+        }
+        collectState(popularAlbums) { albumsList ->
+            copy(popularAlbums = albumsList.take(10))
+        }
+        collectState(searchHistories) { searchHistories ->
+            copy(searchHistories = searchHistories)
+        }
     }
-
-
 }

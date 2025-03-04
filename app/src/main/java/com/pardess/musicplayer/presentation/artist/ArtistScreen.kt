@@ -23,7 +23,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,13 +31,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.domain.model.Artist
+import com.pardess.musicplayer.domain.model.Song
+import com.pardess.musicplayer.presentation.base.BaseScreen
 import com.pardess.musicplayer.presentation.component.MusicImage
 import com.pardess.musicplayer.presentation.navigation.Screen
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.NavigationBarHeight
 import com.pardess.musicplayer.ui.theme.PointColor
-import com.pardess.musicplayer.ui.theme.PointColor3
 import com.pardess.musicplayer.ui.theme.TextColor
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
@@ -47,13 +48,33 @@ import my.nanihadesuka.compose.ScrollbarSettings
 fun ArtistScreen(
     onNavigateToRoute: (String) -> Unit,
     upPress: () -> Unit,
-    artistState: State<List<Artist>>
+    allSongs: List<Song>
 ) {
+    val viewModel: ArtistViewModel = hiltViewModel()
+    viewModel.onEvent(ArtistUiEvent.LoadArtists(allSongs))
+    BaseScreen(
+        viewModel = viewModel,
+        onEffect = { effect ->
+            when (effect) {
+                is ArtistEffect.SelectArtist -> {
+                    onNavigateToRoute(Screen.DetailArtist.route + "/${effect.artistId}")
+                }
+            }
+        },
+    ) { uiState, onEvent ->
+        ArtistScreen(
+            onEvent = onEvent,
+            artists = uiState.artists
+        )
+    }
+}
 
+@Composable
+private fun ArtistScreen(
+    onEvent: (ArtistUiEvent) -> Unit,
+    artists: List<Artist>
+) {
     val state = rememberLazyListState()
-
-    println("@@@@ artists: $artistState")
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -67,7 +88,7 @@ fun ArtistScreen(
                 state = state,
                 settings = ScrollbarSettings.Default.copy(
                     thumbThickness = 20.dp,
-                    enabled = artistState.value.size > 20,
+                    enabled = artists.size > 20,
                     thumbUnselectedColor = PointColor
                 )
             ) {
@@ -78,11 +99,11 @@ fun ArtistScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(artistState.value) { artist ->
+                    items(artists) { artist ->
                         ArtistItem(
                             artist = artist,
                             onClickArtist = {
-                                onNavigateToRoute(Screen.DetailArtist.route + "/${artist.id}")
+                                onEvent(ArtistUiEvent.SelectArtist(artist.id))
                             }
                         )
                     }

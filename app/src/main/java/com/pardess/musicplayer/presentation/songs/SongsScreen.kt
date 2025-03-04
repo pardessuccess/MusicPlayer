@@ -16,8 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -30,12 +28,12 @@ import com.pardess.musicplayer.ui.theme.PointColor
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
 
+
 @Composable
 fun SongsScreen(
     navigateToRoute: (String) -> Unit,
-    upPress: () -> Unit,
-    songState: State<List<Song>>,
-    onPlaybackEvent: (PlaybackEvent) -> Unit
+    onPlaybackEvent: (PlaybackEvent) -> Unit,
+    allSongs: List<Song>
 ) {
 
     val state = rememberLazyListState()
@@ -54,26 +52,26 @@ fun SongsScreen(
                 settings = ScrollbarSettings.Default.copy(
                     thumbThickness = 20.dp,
                     thumbUnselectedColor = PointColor,
-                    enabled = songState.value.size > 20
+                    enabled = allSongs.size > 20
                 )
             ) {
                 LazyColumn(
                     state = state,
                     contentPadding = PaddingValues(8.dp)
                 ) {
-                    items(songState.value) { song ->
+                    items(allSongs) { song ->
                         SongItem(
                             song = song,
                             onClick = {
                                 onPlaybackEvent(
                                     PlaybackEvent.PlaySong(
-                                        songState.value.indexOf(song),
-                                        songState.value
+                                        allSongs.indexOf(song),
+                                        allSongs
                                     )
                                 )
                             }
                         )
-                        if (song != songState.value.last()) {
+                        if (song != allSongs.last()) {
                             Spacer(
                                 modifier = Modifier
                                     .fillMaxWidth()

@@ -30,7 +30,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,34 +47,62 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.domain.model.Album
 import com.pardess.musicplayer.domain.model.Artist
+import com.pardess.musicplayer.domain.model.Song
+import com.pardess.musicplayer.presentation.base.BaseScreen
 import com.pardess.musicplayer.presentation.component.MusicImage
 import com.pardess.musicplayer.presentation.component.SongItem
+import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxState
+import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.PointColor
 import com.pardess.musicplayer.ui.theme.TextColor
 
+
 @Composable
 fun SearchScreen(
     onNavigateToRoute: (String) -> Unit,
-    upPress: () -> Unit,
-    uiState: State<SearchUiState>,
-    onEvent: (SearchEvent) -> Unit,
+    searchBox: SearchBoxState,
+    onPlaybackEvent: (PlaybackEvent) -> Unit,
+    allSongs: List<Song>,
+) {
+    val viewModel = hiltViewModel<SearchViewModel>()
+    if (allSongs.isNotEmpty()) {
+        viewModel.initSearch(searchBox.searchQuery, allSongs)
+    }
+    BaseScreen(
+        viewModel = viewModel,
+        onEffect = { effect ->
+            when (effect) {
+                is SearchUiEffect.Navigate -> onNavigateToRoute(effect.route)
+            }
+        }
+    ) { uiState, onEvent ->
+        SearchScreen(
+            uiState = uiState,
+            onEvent = onEvent,
+            onPlaybackEvent = onPlaybackEvent
+        )
+    }
+}
+
+@Composable
+private fun SearchScreen(
+    uiState: SearchUiState,
+    onEvent: (SearchUiEvent) -> Unit,
+    onPlaybackEvent: (PlaybackEvent) -> Unit,
 ) {
 
-    val searchResult = uiState.value.searchResult
-    println("@@@@$searchResult")
+    val searchResult = uiState.searchResult
     var searchText by remember { mutableStateOf("") }
     LaunchedEffect(
-        uiState.value.searchQuery
+        uiState.searchQuery
     ) {
-        searchText = uiState.value.searchQuery
+        searchText = uiState.searchQuery
     }
-
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val focusRequester = remember { FocusRequester() }
 
     Box(
         modifier = Modifier
@@ -84,7 +111,7 @@ fun SearchScreen(
     ) {
         if (searchResult.songs.isEmpty() && searchResult.artists.isEmpty() && searchResult.albums.isEmpty()) {
             Text(
-                text = "\"${uiState.value.searchQuery}\"에 대한 검색 결과가 없습니다.",
+                text = "\"${uiState.searchQuery}\"에 대한 검색 결과가 없습니다.",
                 modifier = Modifier
                     .align(Alignment.Center)
                     .padding(horizontal = 20.dp),
@@ -111,152 +138,18 @@ fun SearchScreen(
                     },
                 verticalArrangement = Arrangement.Center
             ) {
-                Row(
-                    modifier = Modifier,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    BasicTextField(
-                        value = searchText,
-                        onValueChange = {
-                            searchText = it
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 16.dp)
-                            .focusRequester(focusRequester),
-                        textStyle = TextStyle(
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextColor
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            imeAction = ImeAction.Search
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onSearch = {
-                                keyboardController?.hide()
-                                onEvent(SearchEvent.Search(searchText))
-                            }
-                        )
-                    )
-                    if (searchText.isNotEmpty()) {
-                        IconButton(
-                            modifier = Modifier.size(60.dp),
-                            onClick = {
-                                searchText = ""
-                            }
-                        ) {
-                            Icon(
-                                modifier = Modifier.size(40.dp),
-                                painter = painterResource(id = R.drawable.ic_close),
-                                contentDescription = "ic_close",
-                                tint = TextColor
-                            )
-                        }
-                    } else {
-                        IconButton(
-                            modifier = Modifier.size(60.dp),
-                            onClick = {
-                                keyboardController?.show()
-                                focusRequester.requestFocus()
-                            }
-                        ) {
-                            Icon(
-                                modifier = Modifier.size(40.dp),
-                                painter = painterResource(id = R.drawable.ic_keyboard),
-                                contentDescription = "edit",
-                                tint = TextColor
-                            )
-                        }
-                    }
-                }
+                SearchInputSection(
+                    searchText = searchText,
+                    setSearchText = { searchText = it },
+                    onEvent = onEvent,
+                )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(8.dp),
-            ) {
-                if (searchResult.songs.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = "노래 (${searchResult.songs.size})",
-                            fontSize = 35.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    items(searchResult.songs) { song ->
-                        SongItem(song = song, onClick = {
-                            onEvent(SearchEvent.SelectSong(song))
-                        })
-                        if (song != searchResult.songs.last()) {
-                            Spacer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(1.5.dp)
-                                    .padding(horizontal = 6.dp)
-                                    .background(Color.Gray.copy(0.2f))
-                            )
-                        }
-                    }
-                }
-                if (searchResult.artists.isNotEmpty()) {
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "가수 (${searchResult.artists.size})",
-                            fontSize = 35.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    items(searchResult.artists) { artist ->
-                        ArtistItem(artist = artist, onClick = {
-                            onEvent(SearchEvent.SelectArtist(artist))
-                        })
-                        if (artist != searchResult.artists.last()) {
-                            Spacer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(1.5.dp)
-                                    .padding(horizontal = 6.dp)
-                                    .background(Color.Gray.copy(0.2f))
-                            )
-                        }
-                    }
-                }
-                if (searchResult.albums.isNotEmpty()) {
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "앨범 (${searchResult.albums.size})",
-                            fontSize = 35.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    items(searchResult.albums) { album ->
-                        AlbumItem(album = album, onClick = {
-                            onEvent(SearchEvent.SelectAlbum(album))
-                        })
-                        if (searchResult.albums.last() != album) {
-                            Spacer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(1.5.dp)
-                                    .padding(horizontal = 6.dp)
-                                    .background(Color.Gray.copy(0.2f))
-                            )
-                        }
-                    }
-                }
-            }
+            SearchResults(
+                searchResult = searchResult,
+                onEvent = onEvent,
+                onPlaybackEvent = onPlaybackEvent
+            )
             Spacer(
                 modifier = Modifier.height(
                     WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -265,6 +158,131 @@ fun SearchScreen(
         }
     }
 }
+
+
+
+@Composable
+fun SearchInputSection(
+    searchText: String,
+    setSearchText: (String) -> Unit,
+    onEvent: (SearchUiEvent) -> Unit,
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusRequester = remember { FocusRequester() }
+
+    Row(
+        modifier = Modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BasicTextField(
+            value = searchText,
+            onValueChange = {
+                setSearchText(it)
+            },
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp)
+                .focusRequester(focusRequester),
+            textStyle = TextStyle(
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextColor
+            ),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    keyboardController?.hide()
+                    onEvent(SearchUiEvent.Search(searchText))
+                }
+            )
+        )
+        if (searchText.isNotEmpty()) {
+            IconButton(
+                modifier = Modifier.size(60.dp),
+                onClick = {
+                    setSearchText("")
+                }
+            ) {
+                Icon(
+                    modifier = Modifier.size(40.dp),
+                    painter = painterResource(id = R.drawable.ic_close),
+                    contentDescription = "ic_close",
+                    tint = TextColor
+                )
+            }
+        } else {
+            IconButton(
+                modifier = Modifier.size(60.dp),
+                onClick = {
+                    keyboardController?.show()
+                    focusRequester.requestFocus()
+                }
+            ) {
+                Icon(
+                    modifier = Modifier.size(40.dp),
+                    painter = painterResource(id = R.drawable.ic_keyboard),
+                    contentDescription = "edit",
+                    tint = TextColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SearchResults(
+    searchResult: SearchResult,
+    onEvent: (SearchUiEvent) -> Unit,
+    onPlaybackEvent: (PlaybackEvent) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(8.dp)
+    ) {
+        if (searchResult.songs.isNotEmpty()) {
+            item { SectionTitle(title = "노래 (${searchResult.songs.size})") }
+            items(searchResult.songs) { song ->
+                SongItem(song = song, onClick = {
+                    onPlaybackEvent(
+                        PlaybackEvent.PlaySong(
+                            searchResult.songs.indexOf(song),
+                            searchResult.songs
+                        )
+                    )
+                    onEvent(SearchUiEvent.SelectSong(song))
+                })
+            }
+        }
+        if (searchResult.artists.isNotEmpty()) {
+            item { SectionTitle(title = "가수 (${searchResult.artists.size})") }
+            items(searchResult.artists) { artist ->
+                ArtistItem(
+                    artist = artist,
+                    onClick = { onEvent(SearchUiEvent.SelectArtist(artist)) })
+            }
+        }
+        if (searchResult.albums.isNotEmpty()) {
+            item { SectionTitle(title = "앨범 (${searchResult.albums.size})") }
+            items(searchResult.albums) { album ->
+                AlbumItem(album = album, onClick = { onEvent(SearchUiEvent.SelectAlbum(album)) })
+            }
+        }
+    }
+}
+
+@Composable
+fun SectionTitle(title: String) {
+    Text(
+        text = title,
+        fontSize = 35.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(start = 8.dp)
+    )
+}
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

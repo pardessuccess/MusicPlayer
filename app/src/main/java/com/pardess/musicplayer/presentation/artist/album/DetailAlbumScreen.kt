@@ -33,32 +33,59 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.domain.model.Album
-import com.pardess.musicplayer.presentation.UiState
+import com.pardess.musicplayer.presentation.Status
+import com.pardess.musicplayer.presentation.base.BaseScreen
 import com.pardess.musicplayer.presentation.component.MusicImage
 import com.pardess.musicplayer.presentation.component.SongItem
 import com.pardess.musicplayer.presentation.navigation.Screen
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.ui.theme.PointColor
-
+import com.pardess.musicplayer.utils.Utils.toTime
+import kotlin.math.abs
 
 @Composable
 fun DetailAlbumScreen(
     onNavigateToRoute: (String) -> Unit,
-    upPress: () -> Unit,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
-    uiState: State<DetailAlbumUiState>
 ) {
 
+    val viewModel: DetailAlbumViewModel = hiltViewModel()
+
+    BaseScreen(
+        viewModel = viewModel,
+        onEffect = { effect ->
+            when (effect) {
+                is DetailAlbumUiEffect.NavigateToAlbum -> {
+                    onNavigateToRoute(effect.route)
+                }
+            }
+        }) { uiState, onEvent ->
+        DetailAlbumScreen(
+            onPlaybackEvent = onPlaybackEvent,
+            uiState = uiState,
+            onEvent = onEvent
+        )
+    }
+}
+
+@Composable
+private fun DetailAlbumScreen(
+    onPlaybackEvent: (PlaybackEvent) -> Unit,
+    uiState: DetailAlbumUiState,
+    onEvent: (DetailAlbumUiEvent) -> Unit
+) {
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
-        when (uiState.value.albumState) {
-            is UiState.Success -> {
-                val album = (uiState.value.albumState as UiState.Success<Album>).data
-                val albums = (uiState.value.albumsState as UiState.Success<List<Album>>).data
+        when (uiState.albumState) {
+            is Status.Success -> {
+                val album = uiState.albumState.data
+                val albums =
+                    (uiState.albumsState as? Status.Success<List<Album>>)?.data ?: emptyList()
 
-                val fullTime = "album.songs.sumOf { it.duration }.toTime()"
+                val fullTime = album.songs.sumOf { it.duration.toMillis() }.toTime()
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -66,52 +93,17 @@ fun DetailAlbumScreen(
                 ) {
                     // 앨범 정보 헤더
                     item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 18.dp),
-                        ) {
-                            MusicImage(
-                                filePath = album.songs.first().data,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(1f),
-                                type = "album"
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = album.title,
-                                fontSize = 36.sp,
-                                fontWeight = FontWeight.Bold,
-                                lineHeight = 36.sp
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                verticalAlignment = Alignment.Bottom
-                            ) {
-                                Text(
-                                    text = album.artistName,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(text = album.year.toString())
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(text = fullTime, fontSize = 14.sp)
-                            }
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(text = "Songs")
-                        }
+                        AlbumHeader(album, fullTime)
                     }
 
                     // 노래 리스트
-                    items(album.songs) { song ->
+                    items(album.songs.size) { index ->
                         SongItem(
-                            song = song,
+                            song = album.songs[index],
                             onClick = {
                                 onPlaybackEvent(
                                     PlaybackEvent.PlaySong(
-                                        album.songs.indexOf(song),
+                                        index,
                                         album.songs
                                     )
                                 )
@@ -122,7 +114,6 @@ fun DetailAlbumScreen(
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
                     }
-
                     // 다른 앨범 리스트
                     if (albums.isNotEmpty()) {
                         item {
@@ -139,11 +130,9 @@ fun DetailAlbumScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 items(albums) { album ->
-                                    RowAlbumItem(
+                                    AlbumCard(
                                         album = album,
-                                        onClickAlbum = {
-                                            onNavigateToRoute(Screen.DetailArtist.route + "/${album.artistId}/${album.id}")
-                                        }
+                                        onClick = { onEvent(DetailAlbumUiEvent.SelectAlbum(album)) }
                                     )
                                 }
                             }
@@ -152,14 +141,16 @@ fun DetailAlbumScreen(
                 }
             }
 
-            is UiState.Loading -> {
+            is Status.Loading -> {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(50.dp),
                     color = Color.Black
                 )
             }
 
-            is UiState.Error -> {
+            is Status.Error -> {
                 Text(
                     text = "Error",
                     modifier = Modifier.align(Alignment.Center),
@@ -167,26 +158,62 @@ fun DetailAlbumScreen(
                 )
             }
         }
-
-
     }
 }
 
 @Composable
-fun RowAlbumItem(
+private fun AlbumHeader(album: Album, fullTime: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 14.dp, vertical = 18.dp),
+    ) {
+        MusicImage(
+            filePath = album.songs.first().data,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f),
+            type = "album"
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = album.title,
+            fontSize = 36.sp,
+            fontWeight = FontWeight.Bold,
+            lineHeight = 36.sp
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text(
+                text = album.artistName,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = album.year.toString())
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = fullTime, fontSize = 14.sp)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = "Songs")
+    }
+}
+
+@Composable
+private fun AlbumCard(
     album: Album,
-    onClickAlbum: () -> Unit,
+    onClick: () -> Unit
 ) {
     Card(
-
+        elevation = CardDefaults.elevatedCardElevation(2.dp),
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .width(150.dp)
     ) {
         Column(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .width(150.dp)
-                .clickable {
-                    onClickAlbum()
-                },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             MusicImage(
@@ -196,7 +223,6 @@ fun RowAlbumItem(
                     .aspectRatio(1f),
                 type = "artist"
             )
-
             Text(
                 text = album.title,
                 color = Color.Black,
@@ -206,46 +232,6 @@ fun RowAlbumItem(
                     .padding(8.dp),
                 maxLines = 2,
                 minLines = 2
-            )
-        }
-    }
-}
-
-
-@Composable
-fun AlbumItem(
-    album: Album,
-    onClickAlbum: () -> Unit,
-) {
-    Card(
-        elevation = CardDefaults.elevatedCardElevation(2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(PointColor)
-                .clickable {
-                    onClickAlbum()
-                },
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            MusicImage(
-                filePath = album.songs.first().data,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .aspectRatio(1f),
-                type = "artist"
-            )
-
-            Text(
-                text = album.title,
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(8.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
             )
         }
     }

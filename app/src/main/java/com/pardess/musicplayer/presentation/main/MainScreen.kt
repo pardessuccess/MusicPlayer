@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
-import android.widget.Space
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -12,7 +11,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -28,10 +26,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -64,23 +60,19 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.data.entity.SongEntity
 import com.pardess.musicplayer.data.entity.join.FavoriteSong
-import com.pardess.musicplayer.domain.model.Album
-import com.pardess.musicplayer.domain.model.Artist
 import com.pardess.musicplayer.domain.model.SearchHistory
 import com.pardess.musicplayer.domain.model.SearchType
-import com.pardess.musicplayer.domain.model.Song
-import com.pardess.musicplayer.presentation.component.AutoResizeText
-import com.pardess.musicplayer.presentation.component.FontSizeRange
+import com.pardess.musicplayer.presentation.base.BaseScreen
 import com.pardess.musicplayer.presentation.component.MusicImage
 import com.pardess.musicplayer.presentation.main.component.PopularSection
 import com.pardess.musicplayer.presentation.main.component.SelectButtonSection
-import com.pardess.musicplayer.presentation.navigation.Screen
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.playlist.dialog.setSpeechRecognizer
 import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxEvent
@@ -89,15 +81,42 @@ import com.pardess.musicplayer.presentation.toSong
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.NavigationBarHeight
 import com.pardess.musicplayer.ui.theme.PointColor
-import com.pardess.musicplayer.ui.theme.PointColor2
 import com.pardess.musicplayer.ui.theme.TextColor
+
+@Composable
+fun MainScreen(
+    onNavigateToRoute: (String) -> Unit,
+    searchBoxState: SearchBoxState,
+    onPlaybackEvent: (PlaybackEvent) -> Unit,
+    onSearchEvent: (SearchBoxEvent) -> Unit
+) {
+    val viewModel = hiltViewModel<MainViewModel>()
+    BaseScreen(
+        viewModel = viewModel,
+        onEffect = { effect ->
+            when (effect) {
+                is MainUiEffect.Navigate -> {
+                    onNavigateToRoute(effect.route)
+                }
+            }
+        }
+    ) { uiState, onEvent ->
+        MainScreen(
+            uiState = uiState,
+            searchBoxState = searchBoxState,
+            onEvent = onEvent,
+            onPlaybackEvent = onPlaybackEvent,
+            onSearchEvent = onSearchEvent
+        )
+    }
+}
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MainScreen(
+private fun MainScreen(
+    uiState: MainUiState,
     searchBoxState: SearchBoxState,
     onEvent: (MainUiEvent) -> Unit,
-    uiState: MainUiState,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
     onSearchEvent: (SearchBoxEvent) -> Unit,
 ) {
@@ -144,7 +163,6 @@ fun MainScreen(
     hasRecordPermission = recordPermissionState.status.isGranted
 
     var speechStatusMsg by remember { mutableStateOf("버튼을 누르고 말해 주세요.") }
-
 
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp - 24.dp
@@ -202,7 +220,6 @@ fun MainScreen(
 
         }
     )
-
 
     Box(
         modifier = Modifier

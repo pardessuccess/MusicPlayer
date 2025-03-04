@@ -1,72 +1,78 @@
 package com.pardess.musicplayer.presentation.main.favorite
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pardess.musicplayer.data.entity.join.FavoriteSong
 import com.pardess.musicplayer.domain.repository.ManageRepository
+import com.pardess.musicplayer.presentation.base.BaseUiEffect
+import com.pardess.musicplayer.presentation.base.BaseUiEvent
+import com.pardess.musicplayer.presentation.base.BaseUiState
+import com.pardess.musicplayer.presentation.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+data class FavoriteUiState(
+    val favoriteSongs: List<FavoriteSong> = emptyList(),
+    val selectedFavoriteSong: FavoriteSong? = null,
+    val showRemoveDialog: Boolean = false,
+) : BaseUiState
+
+sealed class FavoriteUiEvent : BaseUiEvent {
+    data class ShowRemoveDialog(val favoriteSong: FavoriteSong) : FavoriteUiEvent()
+    object DismissRemoveDialog : FavoriteUiEvent()
+    object RemoveFavorite : FavoriteUiEvent()
+}
+
+sealed class FavoriteUiEffect : BaseUiEffect {
+    object FavoriteDelete : FavoriteUiEffect()
+}
 
 @HiltViewModel
 class FavoriteViewModel @Inject constructor(
     private val manageRepository: ManageRepository
-) : ViewModel() {
+) : BaseViewModel<FavoriteUiState, FavoriteUiEvent, FavoriteUiEffect>(FavoriteUiState()) {
 
-    // 내부 상태를 불변 객체로 관리
-    private val _uiState = MutableStateFlow(FavoriteUiState())
-    val uiState = _uiState.asStateFlow()
-
-    private val _effectChannel = Channel<FavoriteUiEffect>(Channel.BUFFERED)
-    val effectFlow = _effectChannel.receiveAsFlow()
-
-    private var currentFavorite: FavoriteSong? = null
+    private val favoriteSongs = manageRepository.getFavoriteSongs().stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(),
+        emptyList()
+    )
 
     init {
-        viewModelScope.launch {
-            manageRepository.getFavoriteSongs().collect { favoriteSongs ->
-                _uiState.update { currentState ->
-                    currentState.copy(favoriteSongs = favoriteSongs)
-                }
-            }
+        collectState(favoriteSongs) { favoriteSongs ->
+            copy(favoriteSongs = favoriteSongs)
         }
     }
 
-    fun onEvent(event: FavoriteUiEvent) {
+    override fun onEvent(event: FavoriteUiEvent) {
         when (event) {
-            is FavoriteUiEvent.RemoveFavorite -> {
-                removeFavorite()
+            is FavoriteUiEvent.ShowRemoveDialog -> {
+                updateState {
+                    copy(
+                        showRemoveDialog = true,
+                        selectedFavoriteSong = event.favoriteSong
+                    )
+                }
             }
 
             FavoriteUiEvent.DismissRemoveDialog -> {
-                currentFavorite = null
-                viewModelScope.launch {
-                    _effectChannel.send(FavoriteUiEffect.DismissRemoveDialog)
-                }
+                updateState { copy(showRemoveDialog = false, selectedFavoriteSong = null) }
             }
 
-            is FavoriteUiEvent.ShowRemoveDialog -> {
-                currentFavorite = event.favoriteSong
-                viewModelScope.launch {
-                    _effectChannel.send(FavoriteUiEffect.ShowRemoveDialog(event.favoriteSong))
-                }
+            FavoriteUiEvent.RemoveFavorite -> {
+                removeFavorite()
             }
         }
     }
 
     private fun removeFavorite() {
-        val favoriteSong = currentFavorite ?: return
+        val favoriteSong = uiState.value.selectedFavoriteSong ?: return
         viewModelScope.launch {
             manageRepository.removeFavorite(favoriteSong.song.id)
-            currentFavorite = null
-            _effectChannel.send(FavoriteUiEffect.FavoriteUiRemoved)
+            updateState { copy(showRemoveDialog = false, selectedFavoriteSong = null) }
+            sendEffect(FavoriteUiEffect.FavoriteDelete)
         }
     }
-
-
 }

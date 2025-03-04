@@ -13,9 +13,9 @@ sealed class PlaybackEvent {
     object ResumeSong : PlaybackEvent()
     object SkipToNextSong : PlaybackEvent()
     object SkipToPreviousSong : PlaybackEvent()
-    data class RepeatMode(val repeatMode: Int? = null) : PlaybackEvent()
-    object ShuffleMode : PlaybackEvent()
+    data class RepeatMode(val repeatMode: Int) : PlaybackEvent()
+    data class ShuffleMode(val shuffle: Boolean) : PlaybackEvent()
     data class SeekSongToPosition(val position: Long) : PlaybackEvent()
     object ExpandPanel : PlaybackEvent()
-    object ClickFavorite : PlaybackEvent()
+    object Favorite : PlaybackEvent()
 }
