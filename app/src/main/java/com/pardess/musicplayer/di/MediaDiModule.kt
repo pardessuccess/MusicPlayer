@@ -1,5 +1,6 @@
 package com.pardess.musicplayer.di
 
+import com.pardess.musicplayer.domain.repository.ManageRepository
 import com.pardess.musicplayer.domain.usecase.media_player.MediaPlayerListenerUseCase
 import com.pardess.musicplayer.domain.usecase.media_player.MediaPlayerListenerUseCaseImpl
 import com.pardess.musicplayer.domain.usecase.media_player.MediaPlayerUseCase
@@ -20,6 +21,6 @@ abstract class MediaDiModule {
 
     @Binds
     abstract fun bindsMediaPlayerListenerUseCase(
-        mediaPlayerListenerUseCaseImpl: MediaPlayerListenerUseCaseImpl
+        mediaPlayerListenerUseCaseImpl: MediaPlayerListenerUseCaseImpl,
     ): MediaPlayerListenerUseCase
 }

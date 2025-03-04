@@ -1,5 +1,6 @@
 package com.pardess.musicplayer.presentation.main.history
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,16 +19,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.data.entity.join.HistorySong
+import com.pardess.musicplayer.presentation.base.BaseScreen
+import com.pardess.musicplayer.presentation.component.FullWidthButton
 import com.pardess.musicplayer.presentation.component.SongItem
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.toSong
@@ -37,19 +38,46 @@ import my.nanihadesuka.compose.ScrollbarSettings
 
 @Composable
 fun HistoryScreen(
-    uiState: State<HistoryUiState>,
+    onPlaybackEvent: (PlaybackEvent) -> Unit,
+) {
+    val viewModel = hiltViewModel<HistoryViewModel>()
+    val context = LocalContext.current
+
+    BaseScreen(
+        viewModel = viewModel,
+        onEffect = { effect ->
+            when (effect) {
+                is HistoryEffect.HistoryRemoved -> {
+                    Toast.makeText(context, "기록이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    ) { uiState, onEvent ->
+        HistoryScreen(
+            uiState = uiState,
+            onEvent = onEvent,
+            onPlaybackEvent = onPlaybackEvent
+        )
+    }
+}
+
+@Composable
+private fun HistoryScreen(
+    uiState: HistoryUiState,
     onEvent: (HistoryUiEvent) -> Unit,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
 ) {
-    // derivedStateOf를 사용해 필요한 상태만 분리
-    val historySongs by remember { derivedStateOf { uiState.value.historySongs } }
-
     Column(modifier = Modifier.fillMaxSize()) {
         Header(title = "최근 기록")
         HistorySongList(
-            historySongs = historySongs,
-            onPlaybackEvent = onPlaybackEvent,
-            onLongClick = { historySong -> onEvent(HistoryUiEvent.ShowRemoveDialog(historySong)) }
+            modifier = Modifier.weight(1f),
+            historySongs = uiState.historySongs,
+            onPlaybackEvent = onPlaybackEvent
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        FullWidthButton(
+            text = "초기화",
+            onClick = { onEvent(HistoryUiEvent.ResetHistory) }
         )
         Spacer(
             modifier = Modifier.height(
@@ -62,8 +90,7 @@ fun HistoryScreen(
 @Composable
 fun Header(title: String) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
     ) {
         Text(
@@ -78,9 +105,9 @@ fun Header(title: String) {
 
 @Composable
 fun HistorySongList(
+    modifier: Modifier = Modifier,
     historySongs: List<HistorySong>,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
-    onLongClick: (HistorySong) -> Unit
 ) {
     val lazyListState = rememberLazyListState()
     LazyColumnScrollbar(
@@ -90,7 +117,7 @@ fun HistorySongList(
             enabled = historySongs.size > 20,
             thumbUnselectedColor = PointColor
         ),
-        modifier = Modifier
+        modifier = modifier
     ) {
         LazyColumn(
             state = lazyListState,
@@ -107,9 +134,8 @@ fun HistorySongList(
                             )
                         )
                     },
-                    onLongClick = { onLongClick(historySong) }
                 )
-                if(historySong != historySongs.last()) {
+                if (historySong != historySongs.last()) {
                     Spacer(
                         modifier = Modifier
                             .fillMaxWidth()

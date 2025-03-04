@@ -1,7 +1,6 @@
 package com.pardess.musicplayer.presentation.playlist
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -31,31 +30,26 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.data.entity.PlaylistEntity
+import com.pardess.musicplayer.presentation.base.BaseScreen
 import com.pardess.musicplayer.presentation.navigation.Screen
 import com.pardess.musicplayer.presentation.playlist.component.DragAndDropListState
 import com.pardess.musicplayer.presentation.playlist.component.move
 import com.pardess.musicplayer.presentation.playlist.component.rememberDragAndDropListState
 import com.pardess.musicplayer.presentation.playlist.dialog.CreatePlaylistDialog
-import com.pardess.musicplayer.presentation.playlist.dialog.DeletePlaylistDialog
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.Gray300
 import com.pardess.musicplayer.ui.theme.NavigationBarHeight
@@ -66,39 +60,42 @@ import com.pardess.musicplayer.ui.theme.TextColor
 @Composable
 fun PlaylistScreen(
     onNavigateToRoute: (String) -> Unit,
-    upPress: () -> Unit,
-    uiState: State<PlaylistUiState>,
+) {
+    val viewModel = hiltViewModel<PlaylistViewModel>()
+    val context = LocalContext.current
+    BaseScreen(
+        viewModel = viewModel,
+        onEffect = { effect ->
+            when (effect) {
+                is PlaylistUiEffect.Navigate -> {
+                    onNavigateToRoute(effect.route)
+                }
+
+                is PlaylistUiEffect.ShowToast -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        },
+    ) { uiState, onEvent ->
+        PlaylistScreen(
+            uiState = uiState,
+            onEvent = onEvent,
+        )
+    }
+}
+
+@Composable
+private fun PlaylistScreen(
+    uiState: PlaylistUiState,
     onEvent: (PlaylistUiEvent) -> Unit,
 ) {
-    val playlists = remember { mutableStateListOf<PlaylistEntity>() }
-
-    val deleteMode = uiState.value.deleteMode
-    val selectedPlaylistsIds = uiState.value.selectedPlaylistIds
-
-    LaunchedEffect(uiState.value.playlists) {
-        playlists.clear()
-        playlists.addAll(uiState.value.playlists)
-    }
-
-    val showCreateDialog by remember {
-        derivedStateOf { uiState.value.dialogState.isShowCreatePlaylistDialog }
-    }
-
-    val showDeletePlaylistDialog by remember {
-        derivedStateOf { uiState.value.dialogState.isShowDeletePlaylistDialog }
-    }
-
-    val animatedProgress = remember { Animatable(1f) }
-    // 애니메이션 효과: 화면이 위로 올라오는 효과
-    LaunchedEffect(Unit) {
-        animatedProgress.animateTo(0f, animationSpec = tween(500))
-    }
-
     val lazyListState = rememberLazyListState()
     val dragAndDropListState = rememberDragAndDropListState(lazyListState) { from, to ->
-        if (to < 0 || to >= playlists.size - 1) return@rememberDragAndDropListState
-        playlists.move(from, to)
-        onEvent(PlaylistUiEvent.ChangePlaylistOrder(playlists))
+        if (to in 0 until uiState.playlists.size) {
+            onEvent(PlaylistUiEvent.ChangePlaylistOrder(uiState.playlists.toMutableList().apply {
+                move(from, to)
+            }))
+        }
     }
     Box(
         modifier = Modifier
@@ -114,8 +111,8 @@ fun PlaylistScreen(
                 contentPadding = PaddingValues(8.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                itemsIndexed(playlists) { index, playlist ->
-                    var checked = selectedPlaylistsIds.contains(playlist.playlistId)
+                itemsIndexed(uiState.playlists) { index, playlist ->
+                    val checked = uiState.selectedPlaylistIds.contains(playlist.playlistId)
                     DraggableItem(
                         dragAndDropListState = dragAndDropListState,
                         index = index
@@ -124,16 +121,15 @@ fun PlaylistScreen(
                             modifier = modifier,
                             playlist = playlist,
                             onClick = {
-                                if (deleteMode) {
-                                    checked = !checked
+                                if (uiState.deleteMode) {
                                     onEvent(
                                         PlaylistUiEvent.TogglePlaylistSelection(
                                             playlist,
-                                            checked
+                                            !checked
                                         )
                                     )
                                 } else {
-                                    onNavigateToRoute(Screen.DetailPlaylist.route + "/${playlist.playlistId}")
+                                    onEvent(PlaylistUiEvent.Navigate(Screen.DetailPlaylist.route + "/${playlist.playlistId}"))
                                 }
                             },
                             checked = checked
@@ -141,48 +137,16 @@ fun PlaylistScreen(
                     }
                 }
                 item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .clickable {
-                                    onEvent(PlaylistUiEvent.ToggleDeleteMode)
-                                }
-                                .weight(1f)
-                        ) {
-                            Icon(
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .align(Alignment.Center),
-                                painter = painterResource(R.drawable.ic_remove),
-                                contentDescription = null
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clickable {
-                                    if (deleteMode) {
-                                        onEvent(PlaylistUiEvent.DeletePlaylists)
-                                    } else {
-                                        onEvent(PlaylistUiEvent.SetShowPlaylistDialog(true))
-                                    }
-                                }
-                                .weight(1f)
-                        ) {
-                            Icon(
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .align(Alignment.Center),
-                                painter = painterResource(if (deleteMode) R.drawable.ic_check else R.drawable.ic_add),
-                                contentDescription = null
-                            )
-                        }
-                    }
+                    PlaylistActions(
+                        deleteMode = uiState.deleteMode,
+                        onDeleteToggle = { onEvent(PlaylistUiEvent.ToggleDeleteMode) },
+                        onDeleteConfirm = { onEvent(PlaylistUiEvent.DeletePlaylists) },
+                        onCreatePlaylist = { onEvent(PlaylistUiEvent.SetShowPlaylistDialog(true)) }
+                    )
                 }
+            }
+            if (uiState.isShowCreateDialog) {
+                CreatePlaylistDialog(onEvent = onEvent)
             }
             Spacer(
                 modifier = Modifier.height(
@@ -190,13 +154,6 @@ fun PlaylistScreen(
                         .calculateBottomPadding()
                 )
             )
-        }
-        if (showCreateDialog) {
-            CreatePlaylistDialog(onEvent = onEvent)
-        }
-
-        if (showDeletePlaylistDialog) {
-            DeletePlaylistDialog(onEvent = onEvent)
         }
     }
 }
@@ -227,8 +184,7 @@ fun PlaylistItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(2f)
-                ,
+                .weight(2f),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -243,7 +199,9 @@ fun PlaylistItem(
             }
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                modifier = Modifier.weight(1f).basicMarquee(1),
+                modifier = Modifier
+                    .weight(1f)
+                    .basicMarquee(1),
                 text = playlist.playlistName,
                 fontSize = 36.sp,
                 maxLines = 1,
@@ -260,6 +218,56 @@ fun PlaylistItem(
         }
     }
 }
+
+@Composable
+fun PlaylistActions(
+    deleteMode: Boolean,
+    onDeleteToggle: () -> Unit,
+    onDeleteConfirm: () -> Unit,
+    onCreatePlaylist: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .clickable(onClick = onDeleteToggle)
+                .weight(1f)
+        ) {
+            Icon(
+                modifier = Modifier
+                    .size(80.dp)
+                    .align(Alignment.Center),
+                painter = painterResource(R.drawable.ic_remove),
+                contentDescription = null
+            )
+        }
+        Box(
+            modifier = Modifier
+                .clickable {
+                    if (deleteMode) onDeleteConfirm() else onCreatePlaylist()
+                }
+                .weight(1f)
+        ) {
+            Icon(
+                modifier = Modifier
+                    .size(80.dp)
+                    .align(Alignment.Center),
+                painter = painterResource(if (deleteMode) R.drawable.ic_check else R.drawable.ic_add),
+                contentDescription = null
+            )
+        }
+    }
+}
+
+@Composable
+fun Header() {
+
+}
+
 
 
 // 드래그 제스처를 감지할 Modifier

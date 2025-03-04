@@ -15,6 +15,9 @@ interface HistoryDao {
     @Delete
     suspend fun deleteHistory(history: HistoryEntity)
 
+    @Query("DELETE FROM HistoryEntity")
+    suspend fun deleteAllHistory()
+
     @Query("DELETE FROM HistoryEntity WHERE timestamp = :timestamp")
     suspend fun deleteHistoryByTimestamp(timestamp: Long)
 

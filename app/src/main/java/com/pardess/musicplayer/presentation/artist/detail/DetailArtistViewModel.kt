@@ -6,9 +6,14 @@ import androidx.lifecycle.viewModelScope
 import com.pardess.musicplayer.domain.model.Album
 import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.domain.repository.MusicRepository
-import com.pardess.musicplayer.presentation.UiState
+import com.pardess.musicplayer.presentation.Status
+import com.pardess.musicplayer.presentation.base.BaseUiEffect
+import com.pardess.musicplayer.presentation.base.BaseUiEvent
+import com.pardess.musicplayer.presentation.base.BaseUiState
+import com.pardess.musicplayer.presentation.base.BaseViewModel
 import com.pardess.musicplayer.presentation.navigation.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,71 +26,69 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
+sealed class DetailArtistUiEffect : BaseUiEffect {
+    data class NavigateToAlbum(val route: String) : DetailArtistUiEffect()
+}
+
+data class DetailArtistUiState(
+    val songsState: Status<List<Song>> = Status.Loading,
+    val albumsState: Status<List<Album>> = Status.Loading
+) : BaseUiState
+
+sealed class DetailArtistUiEvent : BaseUiEvent {
+    data class EnterDetailAlbum(val albumId: Long) : DetailArtistUiEvent()
+}
+
 @HiltViewModel
 class DetailArtistViewModel @Inject constructor(
-    private val repository: MusicRepository,
+    repository: MusicRepository,
     savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : BaseViewModel<DetailArtistUiState, DetailArtistUiEvent, DetailArtistUiEffect>(
+    DetailArtistUiState()
+) {
 
     private val artistId = savedStateHandle.get<Long>("artistId") ?: 0L
 
-    private val artistSongsState: StateFlow<UiState<List<Song>>> =
+    private val artistSongsState: StateFlow<Status<List<Song>>> =
         repository.getSongsByArtist(artistId)
-            .map { UiState.Success(it) as UiState<List<Song>> }
-            .onStart { emit(UiState.Loading) }
-            .catch { emit(UiState.Error(it.message ?: "Unknown Error")) }
+            .map {
+                delay(2000)
+                Status.Success(it) as Status<List<Song>>
+            }
+            .onStart { emit(Status.Loading) }
+            .catch { emit(Status.Error(it.message ?: "Unknown Error")) }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
-                initialValue = UiState.Loading
+                initialValue = Status.Loading
             )
-    private val artistAlbumsState: StateFlow<UiState<List<Album>>> =
+    private val artistAlbumsState: StateFlow<Status<List<Album>>> =
         repository.getAlbumsByArtist(artistId).map {
-            UiState.Success(it) as UiState<List<Album>>
-        }.onStart { emit(UiState.Loading) }
+            Status.Success(it) as Status<List<Album>>
+        }.onStart { emit(Status.Loading) }
             .catch {
-                emit(UiState.Error(it.message ?: "Unknown Error"))
+                emit(Status.Error(it.message ?: "Unknown Error"))
             }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
-                initialValue = UiState.Loading
+                initialValue = Status.Loading
             )
 
-    val uiState = MutableStateFlow(DetailArtistUiState())
-
-    fun onEvent(event: DetailArtistUiEvent, onNavigateToRoute: (String) -> Unit = {}) {
+    override fun onEvent(event: DetailArtistUiEvent) {
         when (event) {
             is DetailArtistUiEvent.EnterDetailAlbum -> {
-                println("@@@@ EnterDetailAlbum Screen.DetailArtist.route + /${artistId}/${event.albumId}")
-                onNavigateToRoute(Screen.DetailArtist.route + "/${artistId}/${event.albumId}")
+                sendEffect(DetailArtistUiEffect.NavigateToAlbum(Screen.DetailArtist.route + "/${artistId}/${event.albumId}"))
             }
         }
     }
 
     init {
-        loadArtistData()
-    }
-
-
-    private fun loadArtistData() {
-        viewModelScope.launch {
-            artistAlbumsState.collectLatest {
-                if (it is UiState.Success) {
-                    uiState.value = uiState.value.copy(
-                        albumsState = it
-                    )
-                }
-            }
+        collectState(artistSongsState) { songs ->
+            copy(songsState = songs)
         }
-        viewModelScope.launch() {
-            artistSongsState.collectLatest {
-                if (it is UiState.Success) {
-                    uiState.value = uiState.value.copy(
-                        songsState = it
-                    )
-                }
-            }
+        collectState(artistAlbumsState) { albums ->
+            copy(albumsState = albums)
         }
     }
 }

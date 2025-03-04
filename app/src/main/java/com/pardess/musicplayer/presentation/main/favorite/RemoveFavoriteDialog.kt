@@ -53,10 +53,10 @@ fun RemoveFavoriteDialog(
                 horizontalArrangement = Arrangement.End
             ) {
                 TwoBottomButton(
-                    text1 = "취소",
-                    text2 = "삭제",
-                    onClick1 = { onEvent(FavoriteUiEvent.DismissRemoveDialog) },
-                    onClick2 = { onEvent(FavoriteUiEvent.RemoveFavorite) }
+                    text1 = "삭제",
+                    text2 = "취소",
+                    onClick1 = { onEvent(FavoriteUiEvent.RemoveFavorite) },
+                    onClick2 = { onEvent(FavoriteUiEvent.DismissRemoveDialog) }
                 )
             }
             Spacer(modifier = Modifier.height(10.dp))

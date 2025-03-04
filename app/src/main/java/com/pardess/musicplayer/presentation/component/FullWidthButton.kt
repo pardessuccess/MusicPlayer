@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pardess.musicplayer.ui.theme.PointColor
 
 @Composable
 fun FullWidthButton(
@@ -21,7 +22,7 @@ fun FullWidthButton(
         .fillMaxWidth()
         .height(100.dp)
         .padding(horizontal = 10.dp),
-    color: Color = Color(0xFF03A9F4),
+    color: Color = PointColor,
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {

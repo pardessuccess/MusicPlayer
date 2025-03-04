@@ -1,7 +1,9 @@
 package com.pardess.musicplayer.presentation.main.favorite
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,16 +20,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.data.entity.join.FavoriteSong
+import com.pardess.musicplayer.presentation.base.BaseScreen
 import com.pardess.musicplayer.presentation.component.FavoriteSongItem
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.toSong
@@ -37,25 +38,63 @@ import my.nanihadesuka.compose.ScrollbarSettings
 
 @Composable
 fun FavoriteScreen(
-    uiState: State<FavoriteUiState>,
+    onPlaybackEvent: (PlaybackEvent) -> Unit,
+) {
+    val viewModel = hiltViewModel<FavoriteViewModel>()
+    val context = LocalContext.current
+
+    BaseScreen(
+        viewModel = viewModel,
+        onEffect = { effect ->
+            when (effect) {
+                is FavoriteUiEffect.FavoriteDelete -> {
+                    Toast.makeText(context, "즐겨찾기가 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    ) { uiState, onEvent ->
+        FavoriteScreen(
+            uiState = uiState,
+            onEvent = onEvent,
+            onPlaybackEvent = onPlaybackEvent
+        )
+    }
+}
+
+@Composable
+private fun FavoriteScreen(
+    uiState: FavoriteUiState,
     onEvent: (FavoriteUiEvent) -> Unit,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
 ) {
-    // derivedStateOf를 사용해 필요한 상태만 분리
-    val favoriteSongs by remember { derivedStateOf { uiState.value.favoriteSongs } }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        Header(title = "좋아하는 노래")
-        FavoriteSongList(
-            favoriteSongs = favoriteSongs,
-            onPlaybackEvent = onPlaybackEvent,
-            onLongClick = { favoriteSong -> onEvent(FavoriteUiEvent.ShowRemoveDialog(favoriteSong)) }
-        )
-        Spacer(
-            modifier = Modifier.height(
-                WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Header(title = "좋아하는 노래")
+            FavoriteSongList(
+                favoriteSongs = uiState.favoriteSongs,
+                onPlaybackEvent = onPlaybackEvent,
+                onLongClick = { favoriteSong ->
+                    onEvent(
+                        FavoriteUiEvent.ShowRemoveDialog(
+                            favoriteSong
+                        )
+                    )
+                }
             )
-        )
+            Spacer(
+                modifier = Modifier.height(
+                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                )
+            )
+        }
+        if (uiState.showRemoveDialog) {
+            RemoveFavoriteDialog(
+                modifier = Modifier.fillMaxWidth(),
+                onEvent = onEvent
+            )
+        }
     }
 }
 

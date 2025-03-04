@@ -1,122 +1,122 @@
 package com.pardess.musicplayer.presentation.playlist.detail
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pardess.musicplayer.data.entity.PlaylistEntity
 import com.pardess.musicplayer.data.entity.PlaylistSong
 import com.pardess.musicplayer.domain.repository.PlaylistRepository
+import com.pardess.musicplayer.presentation.base.BaseUiEffect
+import com.pardess.musicplayer.presentation.base.BaseUiEvent
+import com.pardess.musicplayer.presentation.base.BaseUiState
+import com.pardess.musicplayer.presentation.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+data class DetailPlaylistUiState(
+    val playlist: PlaylistEntity? = null,
+    val playlistSongs: List<PlaylistSong> = emptyList(),
+    val deleteMode: Boolean = false,
+    val selectedSongs: List<PlaylistSong> = emptyList(),
+    val isShowAddSongDialog: Boolean = false,
+) : BaseUiState
+
+sealed class DetailPlaylistUiEvent : BaseUiEvent {
+    object DeleteSelectedSongs : DetailPlaylistUiEvent()
+    object ToggleDeleteMode : DetailPlaylistUiEvent()
+    object SaveSongToPlaylist : DetailPlaylistUiEvent()
+    data class ToggleSongSelection(val playlistSong: PlaylistSong, val isSelected: Boolean) :
+        DetailPlaylistUiEvent()
+
+    data class SetShowAddSongDialog(val isShow: Boolean) : DetailPlaylistUiEvent()
+}
+
+sealed class DetailPlaylistUiEffect : BaseUiEffect {
+    object SongSaved : DetailPlaylistUiEffect()
+    object SongDeleted : DetailPlaylistUiEffect()
+}
 
 @HiltViewModel
 class DetailPlaylistViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : BaseViewModel<DetailPlaylistUiState, DetailPlaylistUiEvent, DetailPlaylistUiEffect>(
+    DetailPlaylistUiState()
+) {
 
     private val playlistId = savedStateHandle.get<Long>("playlistId") ?: 0L
 
-    private val _uiState = MutableStateFlow(DetailPlaylistUiState())
-    val uiState = _uiState.asStateFlow()
+    private val playlistWithSongs = playlistRepository.getPlaylistWithSongs(playlistId).stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        initialValue = null,
+    )
 
     init {
-        loadPlaylistDetail()
-    }
-
-    private fun loadPlaylistDetail() {
-        viewModelScope.launch {
-            playlistRepository.getPlaylistWithSongs(playlistId).collectLatest {
-                _uiState.value = _uiState.value.copy(
-                    playlist = it.playlist,
-                    playlistSongs = it.songs,
-                    dialogState = if (it.songs.isEmpty()) {
-                        _uiState.value.dialogState.copy(isShowAddSongDialog = true)
-                    } else {
-                        _uiState.value.dialogState
-                    }
-                )
-            }
+        collectState(playlistWithSongs) { playlistSongs ->
+            copy(
+                playlist = playlistSongs?.playlist,
+                playlistSongs = playlistSongs?.songs ?: emptyList(),
+                isShowAddSongDialog = playlistSongs?.songs?.isEmpty() == true
+            )
         }
     }
 
-    private fun deleteSongs(songs: List<PlaylistSong>) {
-        viewModelScope.launch {
-            playlistRepository.deleteSongEntities(songs)
-        }
-    }
-
-    fun onEvent(event: DetailPlaylistUiEvent) {
+    override fun onEvent(event: DetailPlaylistUiEvent) {
         when (event) {
-            is DetailPlaylistUiEvent.DeleteSongFromPlaylist -> {
-                viewModelScope.launch {
-                    println("@@@ Delete song ${_uiState.value.deleteSong}")
-                    _uiState.value.deleteSong?.let { playlistRepository.deleteSongEntity(it) }
-                }
-            }
-
             DetailPlaylistUiEvent.SaveSongToPlaylist -> {
                 viewModelScope.launch {
-                    playlistRepository.insertSongEntities(_uiState.value.selectedSongs)
+                    playlistRepository.insertSongEntities(uiState.value.selectedSongs)
                 }
-                _uiState.value = _uiState.value.copy(
-                    selectedSongs = emptyList(),
-                    dialogState = _uiState.value.dialogState.copy(
-                        isShowAddSongDialog = false
+                updateState {
+                    copy(
+                        selectedSongs = emptyList(),
+                        isShowAddSongDialog = false,
                     )
-                )
+                }
+                sendEffect(DetailPlaylistUiEffect.SongSaved)
             }
 
             is DetailPlaylistUiEvent.SetShowAddSongDialog -> {
-                _uiState.value = _uiState.value.copy(
-                    selectedSongs = emptyList(),
-                    dialogState = _uiState.value.dialogState.copy(
+                updateState {
+                    copy(
+                        selectedSongs = emptyList(),
                         isShowAddSongDialog = event.isShow,
-                    ),
-                )
+                    )
+                }
             }
 
             is DetailPlaylistUiEvent.ToggleSongSelection -> {
-                val currentSongs = _uiState.value.selectedSongs.toMutableList()
+                val updatedSongs = uiState.value.selectedSongs.toMutableList()
                 if (event.isSelected) {
-                    if (currentSongs.none { it.song.id == event.playlistSong.song.id }) {
-                        currentSongs.add(event.playlistSong)
-                    }
+                    updatedSongs.add(event.playlistSong)
                 } else {
-                    currentSongs.removeAll { it.song.id == event.playlistSong.song.id }
+                    updatedSongs.remove(event.playlistSong)
                 }
-                _uiState.value = _uiState.value.copy(
-                    selectedSongs = currentSongs
-                )
-            }
-
-            is DetailPlaylistUiEvent.SetShowDeleteSongDialog -> {
-                _uiState.value = _uiState.value.copy(
-                    deleteSong = event.deleteSong,
-                    selectedSongs = emptyList(),
-                    dialogState = _uiState.value.dialogState.copy(
-                        isShowDeleteSongDialog = event.isShow,
-                    )
-                )
+                updateState { copy(selectedSongs = updatedSongs) }
             }
 
             DetailPlaylistUiEvent.DeleteSelectedSongs -> {
-                _uiState.value = _uiState.value.copy(
-                    dialogState = _uiState.value.dialogState.copy(
-                        isShowDeleteSongDialog = false
+                viewModelScope.launch {
+                    val selectedSongs = uiState.value.selectedSongs
+                    val playlistSongs = uiState.value.playlistSongs
+                    val songsToDelete =
+                        playlistSongs.filter { it.songPrimaryKey in selectedSongs.map { it.songPrimaryKey } }
+                    playlistRepository.deleteSongEntities(songsToDelete)
+                }
+                updateState {
+                    copy(
+                        selectedSongs = emptyList(),
+                        deleteMode = false
                     )
-                )
-                deleteSongs(_uiState.value.selectedSongs)
+                }
+                sendEffect(DetailPlaylistUiEffect.SongDeleted)
             }
 
             DetailPlaylistUiEvent.ToggleDeleteMode -> {
-                _uiState.value = _uiState.value.copy(
-                    selectedSongs = emptyList(),
-                    deleteMode = !_uiState.value.deleteMode
-                )
+                updateState { copy(selectedSongs = emptyList(), deleteMode = !deleteMode) }
             }
         }
     }

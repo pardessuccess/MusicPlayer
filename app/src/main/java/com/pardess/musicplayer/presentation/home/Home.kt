@@ -40,22 +40,13 @@ enum class HomeScreen(
 
 @Composable
 fun MusicBottomNavigationBar(
+    onEvent: (HomeUiEvent) -> Unit,
+    uiState: HomeUiState,
     modifier: Modifier = Modifier,
-    tabs: List<HomeScreen>,
-    currentRoute: String,
-    navigateToBottomBarRoute: (String) -> Unit,
 ) {
 
-    val routes = remember { tabs.map { it.route } }
-    val currentSection = tabs.find { it.route == currentRoute }
-        ?: remember { tabs.first() }
-    var selectedItem by rememberSaveable { mutableIntStateOf(0) }
-    when (currentRoute) {
-        HomeScreen.Main.route -> selectedItem = 0
-        HomeScreen.Playlist.route -> selectedItem = 1
-        HomeScreen.Artist.route -> selectedItem = 2
-        HomeScreen.Songs.route -> selectedItem = 3
-    }
+    val tabs = HomeScreen.entries.toList()
+
     NavigationBar(
         containerColor = PointColor,
         modifier = modifier.background(PointColor)
@@ -65,10 +56,10 @@ fun MusicBottomNavigationBar(
                 modifier = Modifier.weight(1f),
                 icon = section.icon,
                 title = section.title,
-                isSelected = tabs.indexOf(section) == selectedItem,
+                isSelected = tabs.indexOf(section) == uiState.selectedBottomIndex,
                 onClick = {
-                    selectedItem = tabs.indexOf(section)
-                    navigateToBottomBarRoute(section.route)
+                    onEvent(HomeUiEvent.BottomBarSelect(tabs.indexOf(section)))
+                    onEvent(HomeUiEvent.NavigateBottomBar(section.route))
                 }
             )
         }
@@ -78,7 +69,10 @@ fun MusicBottomNavigationBar(
 @Composable
 fun NavigationBarItem(
     modifier: Modifier,
-    icon: Int, title: String, isSelected: Boolean, onClick: () -> Unit
+    icon: Int,
+    title: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
 ) {
     Column(
         modifier = modifier

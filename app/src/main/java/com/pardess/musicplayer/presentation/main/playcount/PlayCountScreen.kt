@@ -2,6 +2,7 @@ package com.pardess.musicplayer.presentation.main.playcount
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,16 +19,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.data.entity.join.PlayCountSong
+import com.pardess.musicplayer.presentation.base.BaseScreen
 import com.pardess.musicplayer.presentation.component.PlayCountSongItem
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.toSong
@@ -35,25 +35,36 @@ import com.pardess.musicplayer.ui.theme.PointColor
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
 
+
 @Composable
 fun PlayCountScreen(
-    uiState: State<PlayCountUiState>,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
 ) {
-    // derivedStateOf를 사용해 필요한 상태만 분리
-    val playCountSongs by remember { derivedStateOf { uiState.value.playCountSongs } }
+    val viewModel = hiltViewModel<PlayCountViewModel>()
+    val context = LocalContext.current
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Header(title = "재생 횟수")
-        PlayCountSongList(
-            playCountSongs = playCountSongs,
-            onPlaybackEvent = onPlaybackEvent,
-        )
-        Spacer(
-            modifier = Modifier.height(
-                WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-            )
-        )
+    BaseScreen(
+        viewModel = viewModel,
+        onEffect = { effect ->
+            // 필요할 경우 Effect 추가 (현재는 없음)
+        }
+    ) { uiState, onEvent ->
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Header(title = "재생 횟수")
+                PlayCountSongList(
+                    playCountSongs = uiState.playCountSongs,
+                    onPlaybackEvent = onPlaybackEvent,
+                )
+                Spacer(
+                    modifier = Modifier.height(
+                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                    )
+                )
+            }
+        }
     }
 }
 
@@ -113,7 +124,6 @@ fun PlayCountSongList(
                             .padding(horizontal = 6.dp)
                             .background(Color.Gray.copy(0.2f))
                     )
-
                 }
             }
         }

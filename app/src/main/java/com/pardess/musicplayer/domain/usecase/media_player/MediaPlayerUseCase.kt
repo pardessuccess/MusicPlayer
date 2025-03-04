@@ -27,11 +27,10 @@ interface MediaPlayerUseCase {
     fun stop()
     fun next()
     fun previous()
-    fun repeat()
-    fun shuffle()
+    fun repeat(repeatMode: Int)
+    fun shuffle(shuffle: Boolean)
     fun onSeekingStarted()
     fun onSeekingFinished(duration: Duration)
-
 }
 
 class MediaPlayerUseCaseImpl @Inject constructor(
@@ -116,16 +115,16 @@ class MediaPlayerUseCaseImpl @Inject constructor(
         }
     }
 
-    override fun repeat() {
-        mediaController?.repeatMode = when (mediaController?.repeatMode) {
-            MediaController.REPEAT_MODE_ONE -> MediaController.REPEAT_MODE_ALL
-            MediaController.REPEAT_MODE_ALL -> MediaController.REPEAT_MODE_OFF
-            else -> MediaController.REPEAT_MODE_ONE
+    override fun repeat(repeatMode: Int) {
+        mediaController?.repeatMode = when (repeatMode) {
+            MediaController.REPEAT_MODE_ONE -> MediaController.REPEAT_MODE_ONE
+            MediaController.REPEAT_MODE_ALL -> MediaController.REPEAT_MODE_ALL
+            else -> MediaController.REPEAT_MODE_OFF
         }
     }
 
-    override fun shuffle() {
-        mediaController?.shuffleModeEnabled = !mediaController?.shuffleModeEnabled!!
+    override fun shuffle(shuffle: Boolean) {
+        mediaController?.shuffleModeEnabled = shuffle
     }
 
     override fun onSeekingStarted() {

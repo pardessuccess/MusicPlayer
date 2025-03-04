@@ -1,6 +1,5 @@
 package com.pardess.musicplayer.presentation.playback
 
-import android.graphics.Point
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
@@ -37,10 +36,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,19 +69,14 @@ import com.pardess.musicplayer.presentation.component.track
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.PointBackgroundColor
 import com.pardess.musicplayer.utils.Utils.toTime
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun Playback(
     playbackUiState: PlaybackUiState,
-    onBarClick: () -> Unit,
-    onSliderChange: (Float) -> Unit,
-    onFavoriteClick: () -> Unit,
-    playOrToggleSong: () -> Unit,
-    playNextSong: () -> Unit,
-    playPreviousSong: () -> Unit,
-    setRepeatMode: () -> Unit,
-    setShuffleMode: () -> Unit,
     onPlaybackUiEvent: (PlaybackEvent) -> Unit,
+    onEvent: (PlaybackEvent) -> Unit,
 ) {
     if (playbackUiState.playerState.currentSong == null) return // 🎵 현재 재생 중인 노래가 없으면 UI 숨김
 
@@ -97,13 +93,18 @@ fun Playback(
 
     var iconResId by remember { mutableIntStateOf(R.drawable.ic_round_pause) }
 
+    val currentSong = playbackUiState.playerState.currentSong
+    val currentTime = playbackUiState.playerState.currentPosition.toMillis()
+    val totalTime = currentSong.duration.toMillis()
+    val shuffleMode = playbackUiState.playerState.shuffle
+    val repeatMode = playbackUiState.playerState.repeatMode
+    val isPlaying = playbackUiState.playerState.isPlaying
 
-    when (playbackUiState.playerState.isPlaying) {
-        true -> {
+    LaunchedEffect(isPlaying) {
+        if (isPlaying) {
             iconResId = R.drawable.ic_round_pause
-        }
-
-        false -> {
+        } else {
+            delay(100)
             iconResId = R.drawable.ic_round_play_arrow
         }
     }
@@ -150,22 +151,16 @@ fun Playback(
             contentAlignment = Alignment.BottomCenter
         ) {
             HomeBottomBarItem(
+                onEvent = onEvent,
                 barHeight = barHeight,
                 expand = barHeight > screenHeight / 2,
-                song = playbackUiState.playerState.currentSong,
-                currentTime = playbackUiState.playerState.currentPosition.toMillis(),
-                totalTime = playbackUiState.playerState.currentSong.duration.toMillis(),
+                song = currentSong,
+                currentTime = currentTime,
+                totalTime = totalTime,
                 iconResId = iconResId,
-                onBarClick = onBarClick,
-                onSliderChange = onSliderChange,
-                playOrToggleSong = playOrToggleSong,
-                playNextSong = playNextSong,
-                playPreviousSong = playPreviousSong,
-                setRepeatMode = setRepeatMode,
-                setShuffleMode = setShuffleMode,
-                isShuffleEnabled = playbackUiState.playerState.shuffle,
-                repeatMode = playbackUiState.playerState.repeatMode,
-                onFavoriteClick = onFavoriteClick
+                shuffleMode = shuffleMode,
+                repeatMode = repeatMode,
+                isPlaying = isPlaying
             )
         }
     }
@@ -174,22 +169,16 @@ fun Playback(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeBottomBarItem(
+    onEvent: (PlaybackEvent) -> Unit,
     barHeight: Dp,
     expand: Boolean,
     song: Song,
     currentTime: Long,
     @DrawableRes iconResId: Int,
     totalTime: Long,
-    onBarClick: () -> Unit,
-    onSliderChange: (Float) -> Unit,
-    playOrToggleSong: () -> Unit,
-    playNextSong: () -> Unit,
-    playPreviousSong: () -> Unit,
-    setRepeatMode: () -> Unit,
-    setShuffleMode: () -> Unit,
-    onFavoriteClick: () -> Unit,
-    isShuffleEnabled: Boolean,
+    shuffleMode: Boolean,
     repeatMode: Int,
+    isPlaying: Boolean
 ) {
 
     val repeatModes = listOf("안함", "한곡", "반복")
@@ -225,7 +214,7 @@ fun HomeBottomBarItem(
                     strokeWidth = strokeWidth
                 )
             }
-            .clickable(onClick = { onBarClick() })
+            .clickable(onClick = { onEvent(PlaybackEvent.ExpandPanel) }),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -284,7 +273,11 @@ fun HomeBottomBarItem(
                         .padding(end = 8.dp)
                         .clip(CircleShape)
                         .clickable(onClick = {
-                            playOrToggleSong()
+                            if (isPlaying) {
+                                onEvent(PlaybackEvent.PauseSong)
+                            } else {
+                                onEvent(PlaybackEvent.ResumeSong)
+                            }
                         }),
                 )
             }
@@ -336,7 +329,9 @@ fun HomeBottomBarItem(
                         CustomSlider(
                             modifier = Modifier.fillMaxWidth(),
                             value = currentTime.toFloat(),
-                            onValueChange = onSliderChange,
+                            onValueChange = {
+                                onEvent(PlaybackEvent.SeekSongToPosition(it.toLong()))
+                            },
                             valueRange = 0f..totalTime.toFloat(),
                             thumb = { thumbValue ->
                                 CustomSliderDefaults.Thumb(
@@ -404,7 +399,7 @@ fun HomeBottomBarItem(
                         modifier = Modifier
                             .clip(CircleShape)
                             .clickable(onClick = {
-                                playPreviousSong()
+                                onEvent(PlaybackEvent.SkipToPreviousSong)
                             })
                             .padding(start = 12.dp)
                             .weight(1f)
@@ -416,7 +411,11 @@ fun HomeBottomBarItem(
                         modifier = Modifier
                             .clip(CircleShape)
                             .clickable(onClick = {
-                                playOrToggleSong()
+                                if (isPlaying) {
+                                    onEvent(PlaybackEvent.PauseSong)
+                                } else {
+                                    onEvent(PlaybackEvent.ResumeSong)
+                                }
                             })
                             .size(140.dp),
                         tint = Color.Black
@@ -427,7 +426,7 @@ fun HomeBottomBarItem(
                         modifier = Modifier
                             .clip(CircleShape)
                             .clickable(onClick = {
-                                playNextSong()
+                                onEvent(PlaybackEvent.SkipToNextSong)
                             })
                             .padding(end = 12.dp)
                             .weight(1f)
@@ -442,15 +441,15 @@ fun HomeBottomBarItem(
                         modifier = Modifier
                             .weight(1f)
                             .height(100.dp),
-                        text = if (isShuffleEnabled) shuffleModes[1] else shuffleModes[0],
-                        onClick = { setShuffleMode() }
+                        text = if (shuffleMode) shuffleModes[1] else shuffleModes[0],
+                        onClick = { onEvent(PlaybackEvent.ShuffleMode(!shuffleMode)) }
                     )
 
                     IconButton(
                         modifier = Modifier
                             .size(90.dp),
                         onClick = {
-                            onFavoriteClick()
+                            onEvent(PlaybackEvent.Favorite)
                         },
                     ) {
                         Icon(
@@ -466,7 +465,17 @@ fun HomeBottomBarItem(
                             .weight(1f)
                             .height(100.dp),
                         text = repeatModes[repeatMode],
-                        onClick = { setRepeatMode() }
+                        onClick = {
+                            onEvent(
+                                PlaybackEvent.RepeatMode(
+                                    when (repeatMode) {
+                                        0 -> 1
+                                        1 -> 2
+                                        else -> 0
+                                    }
+                                )
+                            )
+                        }
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                 }

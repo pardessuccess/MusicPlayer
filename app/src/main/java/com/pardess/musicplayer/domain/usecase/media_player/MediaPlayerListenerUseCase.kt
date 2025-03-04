@@ -4,6 +4,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import com.pardess.musicplayer.data.mapper.toSong
 import com.pardess.musicplayer.data.service.MediaControllerManager
+import com.pardess.musicplayer.domain.repository.ManageRepository
 import com.pardess.musicplayer.presentation.playback.PlayerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +31,8 @@ interface MediaPlayerListenerUseCase {
 }
 
 class MediaPlayerListenerUseCaseImpl @Inject constructor(
-    private val mediaControllerManager: MediaControllerManager
+    private val mediaControllerManager: MediaControllerManager,
+    private val manageRepository: ManageRepository,
 ) : MediaPlayerListenerUseCase {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
@@ -66,7 +68,7 @@ class MediaPlayerListenerUseCaseImpl @Inject constructor(
                         repeatMode = mediaController.repeatMode
                     )
                 }
-                println("@@@@@ Events ${mediaController.currentMediaItem}")
+//                println("@@@@@ Events ${mediaController.currentMediaItem}")
             }
 
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {

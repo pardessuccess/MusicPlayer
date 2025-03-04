@@ -59,6 +59,10 @@ class ManageRepositoryImpl @Inject constructor(
         favoriteDao.deleteFavoriteBySongId(songId)
     }
 
+    override suspend fun resetHistory() {
+        historyDao.deleteAllHistory()
+    }
+
     override suspend fun removeHistory(timestamp: Long) {
         historyDao.deleteHistoryByTimestamp(timestamp)
     }

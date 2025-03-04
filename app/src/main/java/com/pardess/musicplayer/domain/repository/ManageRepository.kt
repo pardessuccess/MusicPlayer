@@ -16,6 +16,8 @@ interface ManageRepository {
 
     suspend fun upsertFavorite(songEntity: SongEntity)
 
+    suspend fun resetHistory()
+
     suspend fun upsertPlayCount(songEntity: SongEntity)
 
     suspend fun insertHistory(songEntity: SongEntity, timestamp: Long)

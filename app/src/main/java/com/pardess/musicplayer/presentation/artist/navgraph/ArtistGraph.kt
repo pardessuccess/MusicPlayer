@@ -1,6 +1,7 @@
 package com.pardess.musicplayer.presentation.artist.navgraph
 
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
@@ -10,7 +11,6 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.presentation.artist.ArtistScreen
-import com.pardess.musicplayer.presentation.artist.ArtistViewModel
 import com.pardess.musicplayer.presentation.artist.album.DetailAlbumScreen
 import com.pardess.musicplayer.presentation.artist.album.DetailAlbumViewModel
 import com.pardess.musicplayer.presentation.artist.detail.DetailArtistScreen
@@ -25,22 +25,17 @@ fun NavGraphBuilder.artistGraph(
     onNavigateToRoute: (String) -> Unit,
     upPress: () -> Unit,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
-    allSongState: State<List<Song>>,
+    allSongsState: State<List<Song>>,
 ) {
     navigation(
         route = Navigation.Artist.route,
         startDestination = HomeScreen.Artist.route,
     ) {
         composable(HomeScreen.Artist.route) {
-
-            val viewModel = hiltViewModel<ArtistViewModel>()
-            viewModel.setArtists(allSongState.value)
-            val artistState = viewModel.artistState.collectAsStateWithLifecycle()
-
             ArtistScreen(
                 onNavigateToRoute = onNavigateToRoute,
                 upPress = upPress,
-                artistState = artistState
+                allSongs = allSongsState.value,
             )
         }
         composable(
@@ -52,20 +47,9 @@ fun NavGraphBuilder.artistGraph(
                 },
             )
         ) {
-            val viewModel = hiltViewModel<DetailArtistViewModel>()
-            val uiState = viewModel.uiState.collectAsStateWithLifecycle()
-
             DetailArtistScreen(
                 onNavigateToRoute = onNavigateToRoute,
-                upPress = upPress,
-                onEvent = { event ->
-                    viewModel.onEvent(
-                        event = event,
-                        onNavigateToRoute = onNavigateToRoute
-                    )
-                },
                 onPlaybackEvent = onPlaybackEvent,
-                uiState = uiState,
             )
         }
         composable(
@@ -80,13 +64,9 @@ fun NavGraphBuilder.artistGraph(
                 }
             )
         ) {
-            val viewModel = hiltViewModel<DetailAlbumViewModel>()
-            val uiState = viewModel.uiState.collectAsStateWithLifecycle()
             DetailAlbumScreen(
                 onNavigateToRoute = onNavigateToRoute,
-                upPress = upPress,
                 onPlaybackEvent = onPlaybackEvent,
-                uiState = uiState
             )
         }
     }
