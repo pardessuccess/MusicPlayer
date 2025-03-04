@@ -25,6 +25,8 @@ import com.pardess.musicplayer.domain.repository.MusicRepository
 import com.pardess.musicplayer.domain.repository.PlaylistRepository
 import com.pardess.musicplayer.domain.repository.PrefRepository
 import com.pardess.musicplayer.domain.repository.SearchRepository
+import com.pardess.musicplayer.domain.usecase.media_player.MediaPlayerListenerUseCase
+import com.pardess.musicplayer.domain.usecase.media_player.MediaPlayerListenerUseCaseImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,39 +39,39 @@ import javax.inject.Singleton
 object AppModule {
 
     @Provides
-    fun provideContentResolver(@ApplicationContext context: Context): ContentResolver {
+    fun providesContentResolver(@ApplicationContext context: Context): ContentResolver {
         return context.contentResolver
     }
 
     @Provides
     @Singleton
-    fun provideDatabase(app: Application): MusicDatabase {
+    fun providesDatabase(app: Application): MusicDatabase {
         return Room.databaseBuilder(app, MusicDatabase::class.java, MusicDatabase.NAME)
             .addMigrations(MIGRATION_1_2)
             .build()
     }
 
     @Provides
-    fun provideSongDao(database: MusicDatabase) = database.songDao()
+    fun providesSongDao(database: MusicDatabase) = database.songDao()
 
     @Provides
-    fun providePlaylistDao(database: MusicDatabase) = database.playlistDao()
+    fun providesPlaylistDao(database: MusicDatabase) = database.playlistDao()
 
     @Provides
-    fun provideHistoryDao(database: MusicDatabase) = database.historyDao()
+    fun providesHistoryDao(database: MusicDatabase) = database.historyDao()
 
     @Provides
-    fun provideFavoriteDao(database: MusicDatabase) = database.favoriteDao()
+    fun providesFavoriteDao(database: MusicDatabase) = database.favoriteDao()
 
     @Provides
-    fun providePlayCountDao(database: MusicDatabase) = database.playCountDao()
+    fun providesPlayCountDao(database: MusicDatabase) = database.playCountDao()
 
     @Provides
-    fun provideSearchDao(database: MusicDatabase) = database.searchDao()
+    fun providesSearchDao(database: MusicDatabase) = database.searchDao()
 
     @Provides
     @Singleton
-    fun provideSearchRepository(
+    fun providesSearchRepository(
         searchDao: SearchDao
     ): SearchRepository {
         return SearchRepositoryImpl(searchDao)
@@ -77,7 +79,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideManageRepository(
+    fun providesManageRepository(
         favoriteDao: FavoriteDao,
         historyDao: HistoryDao,
         playCountDao: PlayCountDao,
@@ -93,7 +95,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun providePlaylistRepository(
+    fun providesPlaylistRepository(
         playlistDao: PlaylistDao
     ): PlaylistRepository {
         return PlaylistRepositoryImpl(playlistDao)
@@ -101,7 +103,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideMusicRepository(
+    fun providesMusicRepository(
         @ApplicationContext context: Context,
     ): MusicRepository {
         return MusicRepositoryImpl(context)
@@ -109,31 +111,15 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun providePrefRepository(
+    fun providesPrefRepository(
         userPreferences: UserPreferences
     ): PrefRepository {
         return PrefRepositoryImpl(userPreferences)
     }
-
-
-
-//    @Provides
-//    @Singleton
-//    fun provideMusicController(@ApplicationContext context: Context): MusicController =
-//        MusicControllerImpl(context)
 
     @Provides
     @Singleton
     fun provideUserPreferences(@ApplicationContext context: Context): UserPreferences {
         return UserPreferencesImpl(context)
     }
-
-//    @Provides
-//    @Singleton
-//    fun provideNotification(
-//        @ApplicationContext context: Context,
-//        musicController: MusicController
-//    ): PlaybackNotificationOver24 {
-//        return PlaybackNotificationOver24(context, musicController)
-//    }
 }

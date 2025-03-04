@@ -11,45 +11,45 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pardess.musicplayer.Constants
 import com.pardess.musicplayer.domain.model.Song
-import com.pardess.musicplayer.presentation.home.HomeScreen
-import com.pardess.musicplayer.presentation.home.MusicBottomNavigationBar
-import com.pardess.musicplayer.presentation.songs.SongsScreen
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.pardess.musicplayer.presentation.home.HomeEvent
-import com.pardess.musicplayer.presentation.home.HomeUiState
-import com.pardess.musicplayer.presentation.home.HomeViewModel
 import com.pardess.musicplayer.presentation.artist.navgraph.artistGraph
+import com.pardess.musicplayer.presentation.component.FullWidthButton
+import com.pardess.musicplayer.presentation.home.HomeScreen
+import com.pardess.musicplayer.presentation.home.HomeUiEffect
+import com.pardess.musicplayer.presentation.home.HomeUiEvent
+import com.pardess.musicplayer.presentation.home.HomeViewModel
+import com.pardess.musicplayer.presentation.home.MusicBottomNavigationBar
 import com.pardess.musicplayer.presentation.main.navgraph.mainGraph
-import com.pardess.musicplayer.presentation.playlist.navgraph.playlistGraph
 import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxEvent
 import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxState
 import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxViewModel
 import com.pardess.musicplayer.presentation.playback.Playback
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.playback.PlaybackViewModel
+import com.pardess.musicplayer.presentation.playlist.navgraph.playlistGraph
 import com.pardess.musicplayer.presentation.songs.navgraph.songsGraph
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.PointColor
@@ -60,175 +60,131 @@ import com.pardess.musicplayer.ui.theme.PointColor
 fun MusicNavHost(
     navController: MusicNavController
 ) {
+    MediaPermissionHandler {
+        val playbackViewModel = hiltViewModel<PlaybackViewModel>()
+        val searchBoxViewModel = hiltViewModel<SearchBoxViewModel>()
+        val homeViewModel = hiltViewModel<HomeViewModel>()
+        val homeUiState = homeViewModel.uiState.collectAsStateWithLifecycle()
 
-    val mediaPermissions = rememberMultiplePermissionsState(Constants.MEDIA_PERMISSIONS)
+        val currentRoute = homeUiState.value.currentRoute
 
-    LaunchedEffect(Unit) {
-        if (!mediaPermissions.allPermissionsGranted) {
-            mediaPermissions.launchMultiplePermissionRequest()
+        val searchBoxState = searchBoxViewModel.uiState.collectAsStateWithLifecycle()
+        val allSongsState = playbackViewModel.allSongs.collectAsStateWithLifecycle()
+        val playbackUiState = playbackViewModel.uiState.collectAsStateWithLifecycle()
+        val windowBottomPadding =
+            WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
+        // 현재 백 스택에서 가장 최신의 `destination`을 가져옴 (null 방지)
+        val navBackStackEntry by navController.navController.currentBackStackEntryAsState()
+
+        // 현재 경로를 가져오되, null이면 기본 경로 설정
+        homeViewModel.onEvent(
+            HomeUiEvent.CurrentRoute(
+                navBackStackEntry?.destination?.route ?: HomeScreen.Main.route
+            )
+        )
+
+        val bottomBarHeight by animateDpAsState(
+            targetValue = if (playbackUiState.value.expand || !HomeScreen.entries.any { it.route == currentRoute } || searchBoxState.value.expand) windowBottomPadding else 100.dp + windowBottomPadding,
+            animationSpec = tween(400), label = "Playback Bar Height"
+        )
+
+        BackHandler(enabled = playbackUiState.value.expand || searchBoxState.value.expand) {
+            if (searchBoxState.value.expand) {
+                searchBoxViewModel.onEvent(SearchBoxEvent.Shrink)
+                return@BackHandler
+            }
         }
-    }
-    if (!mediaPermissions.allPermissionsGranted) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("앱을 사용하기 위해서는 미디어 권한이 필요합니다.")
-                Text("미디어 권한을 허락해주세요!")
-                Button(
-                    onClick = {
-                        mediaPermissions.launchMultiplePermissionRequest()
+
+        val systemUiController = rememberSystemUiController()
+        LaunchedEffect(bottomBarHeight) {
+            if (bottomBarHeight == windowBottomPadding) {
+                systemUiController.setSystemBarsColor(
+                    color = Color.White, // 원하는 색상
+                )
+                return@LaunchedEffect
+            }
+            systemUiController.setNavigationBarColor(
+                color = PointColor, // 원하는 색상
+            )
+            systemUiController.setStatusBarColor(
+                color = BackgroundColor, // 원하는 색상
+            )
+        }
+        val lifecycleOwner = LocalLifecycleOwner.current
+        LaunchedEffect(homeViewModel) {
+            lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                homeViewModel.effectFlow.collect { effect ->
+                    when (effect) {
+                        is HomeUiEffect.NavigateBottom -> {
+                            navController.navigateToBottomBarRoute(effect.route)
+                        }
                     }
-                ) {
-                    Text("권한 허락")
                 }
             }
         }
-        return
-    }
 
-    val playbackViewModel = hiltViewModel<PlaybackViewModel>()
-    val searchBoxViewModel = hiltViewModel<SearchBoxViewModel>()
-    val homeViewModel = hiltViewModel<HomeViewModel>()
-
-    val homeState = homeViewModel.uiState.collectAsStateWithLifecycle()
-
-    val mainState = searchBoxViewModel.uiState.collectAsStateWithLifecycle()
-
-    val allSongState =
-        playbackViewModel.allSongState.collectAsStateWithLifecycle()
-
-    val playbackUiState = playbackViewModel.playbackUiState.collectAsStateWithLifecycle()
-
-    val navigationBarHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-
-    // 현재 백 스택에서 가장 최신의 `destination`을 가져옴 (null 방지)
-    val navBackStackEntry by navController.navController.currentBackStackEntryAsState()
-
-    // 현재 경로를 가져오되, null이면 기본 경로 설정
-    val currentRoute = navBackStackEntry?.destination?.route ?: HomeScreen.Main.route
-
-    val bottomBarHeight by animateDpAsState(
-        targetValue = if (playbackUiState.value.expand || !HomeScreen.entries.any { it.route == currentRoute } || mainState.value.expand) navigationBarHeight else 100.dp + navigationBarHeight,
-        animationSpec = tween(400), label = "Playback Bar Height"
-    )
-
-    BackHandler(enabled = playbackUiState.value.expand || mainState.value.expand) {
-        if (mainState.value.expand) {
-            searchBoxViewModel.onEvent(SearchBoxEvent.Shrink)
-            return@BackHandler
-        }
-    }
-
-    val systemUiController = rememberSystemUiController()
-    LaunchedEffect(bottomBarHeight) {
-        if (bottomBarHeight == navigationBarHeight) {
-            systemUiController.setSystemBarsColor(
-                color = Color.White, // 원하는 색상
-            )
-            return@LaunchedEffect
-        }
-        systemUiController.setNavigationBarColor(
-            color = PointColor, // 원하는 색상
-        )
-        systemUiController.setStatusBarColor(
-            color = BackgroundColor, // 원하는 색상
-        )
-    }
-
-    Scaffold(
-        bottomBar = {
-            MusicBottomNavigationBar(
-                modifier = Modifier.height(bottomBarHeight),
-                tabs = HomeScreen.entries.toList(),
-                currentRoute = currentRoute ?: HomeScreen.Main.route,
-                navigateToBottomBarRoute = navController::navigateToBottomBarRoute,
-            )
-        }
-    ) {
-        Box(
-            modifier = Modifier.padding()
+        Scaffold(
+            bottomBar = {
+                MusicBottomNavigationBar(
+                    onEvent = homeViewModel::onEvent,
+                    uiState = homeUiState.value,
+                    modifier = Modifier.height(bottomBarHeight),
+                )
+            }
         ) {
             Box(
-                modifier = Modifier
-                    .padding(
-                        top = it.calculateTopPadding(),
-                        bottom = if (playbackUiState.value.playerState.currentSong != null) 116.dp else 0.dp
-                    )
+                modifier = Modifier.padding()
             ) {
-                NavHost(
-                    navController = navController.navController,
-                    startDestination = Navigation.Home.route,
+                Box(
+                    modifier = Modifier
+                        .padding(
+                            top = it.calculateTopPadding(),
+                            bottom = if (playbackUiState.value.playerState.currentSong != null) 116.dp else 0.dp
+                        )
                 ) {
-                    navGraph(
+                    NavHost(
                         navController = navController.navController,
-                        onNavigateToRoute = navController::navigateToRoute,
-                        upPress = navController::upPress,
-                        allSongState = allSongState,
-                        onPlaybackEvent = playbackViewModel::onEvent,
-                        onMainEvent = { event ->
-                            searchBoxViewModel.onEvent(
-                                event = event,
-                                onNavigateToRoute = navController::navigateToRoute,
-                            )
-                        },
-                        searchBoxState = mainState,
-                        homeState = homeState,
-                        onHomeEvent = homeViewModel::onEvent
+                        startDestination = Navigation.Home.route,
+                    ) {
+                        navGraph(
+                            onNavigateToRoute = navController::navigateToRoute,
+                            upPress = navController::upPress,
+                            allSongsState = allSongsState,
+                            onPlaybackEvent = playbackViewModel::onEvent,
+                            onSearchBoxEvent = { event ->
+                                searchBoxViewModel.onEvent(
+                                    event = event,
+                                    onNavigateToRoute = navController::navigateToRoute,
+                                )
+                            },
+                            searchBoxState = searchBoxState,
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = bottomBarHeight)
+                ) {
+                    Playback(
+                        playbackUiState = playbackUiState.value,
+                        onEvent = playbackViewModel::onEvent,
+                        onPlaybackUiEvent = playbackViewModel::onEvent,
                     )
                 }
-            }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = bottomBarHeight)
-            ) {
-                Playback(
-                    playbackUiState = playbackUiState.value,
-                    onPlaybackUiEvent = playbackViewModel::onEvent,
-                    onFavoriteClick = {
-                        playbackViewModel.onEvent(PlaybackEvent.ClickFavorite)
-                    },
-                    onSliderChange = { newPosition ->
-                        playbackViewModel.onEvent(PlaybackEvent.SeekSongToPosition(newPosition.toLong()))
-                    },
-                    onBarClick = {
-                        playbackViewModel.onEvent(PlaybackEvent.ExpandPanel)
-                    },
-                    playOrToggleSong = {
-                        if (playbackUiState.value.playerState.isPlaying)
-                            playbackViewModel.onEvent(PlaybackEvent.PauseSong)
-                        else
-                            playbackViewModel.onEvent(PlaybackEvent.ResumeSong)
-                    },
-                    playNextSong = {
-                        playbackViewModel.onEvent(PlaybackEvent.SkipToNextSong)
-                    },
-                    playPreviousSong = {
-                        playbackViewModel.onEvent(PlaybackEvent.SkipToPreviousSong)
-                    },
-                    setRepeatMode = {
-                        playbackViewModel.onEvent(PlaybackEvent.RepeatMode())
-                    },
-                    setShuffleMode = {
-                        playbackViewModel.onEvent(PlaybackEvent.ShuffleMode)
-                    }
-                )
             }
         }
     }
 }
 
 fun NavGraphBuilder.navGraph(
-    navController: NavHostController,
     onNavigateToRoute: (String) -> Unit,
     upPress: () -> Unit,
-    allSongState: State<List<Song>>,
-    homeState: State<HomeUiState>,
+    allSongsState: State<List<Song>>,
     searchBoxState: State<SearchBoxState>,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
-    onMainEvent: (SearchBoxEvent) -> Unit,
-    onHomeEvent: (HomeEvent) -> Unit
+    onSearchBoxEvent: (SearchBoxEvent) -> Unit,
 ) {
     navigation(
         route = Navigation.Home.route,
@@ -237,35 +193,64 @@ fun NavGraphBuilder.navGraph(
         mainGraph(
             onNavigateToRoute = { route -> onNavigateToRoute(route) },
             upPress = upPress,
-            allSongState = allSongState,
+            allSongsState = allSongsState,
             searchBoxState = searchBoxState,
             onPlaybackEvent = onPlaybackEvent,
-            onMainEvent = onMainEvent,
+            onSearchBoxEvent = onSearchBoxEvent,
         )
         playlistGraph(
             onNavigateToRoute = { route -> onNavigateToRoute(route) },
             upPress = upPress,
-            songState = allSongState,
+            allSongsState = allSongsState,
             onPlaybackEvent = onPlaybackEvent
         )
         artistGraph(
             onNavigateToRoute = { route -> onNavigateToRoute(route) },
             upPress = upPress,
             onPlaybackEvent = onPlaybackEvent,
-            allSongState = allSongState,
+            allSongsState = allSongsState,
         )
         songsGraph(
             onNavigateToRoute = { route -> onNavigateToRoute(route) },
             upPress = upPress,
             onPlaybackEvent = onPlaybackEvent,
-            allSongState = allSongState,
+            allSongsState = allSongsState,
         )
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun MediaPermissionHandler(
+    onPermissionGranted: @Composable () -> Unit
+) {
+    val mediaPermissions = rememberMultiplePermissionsState(Constants.MEDIA_PERMISSIONS)
 
+    LaunchedEffect(Unit) {
+        if (!mediaPermissions.allPermissionsGranted) {
+            mediaPermissions.launchMultiplePermissionRequest()
+        }
+    }
 
-
-
+    if (!mediaPermissions.allPermissionsGranted) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("앱을 사용하기 위해서는 미디어 권한이 필요합니다.")
+                Text("미디어 권한을 허락해주세요!")
+                FullWidthButton(
+                    text = "권한 허락",
+                    onClick = {
+                        mediaPermissions.launchMultiplePermissionRequest()
+                    }
+                )
+            }
+        }
+    } else {
+        onPermissionGranted()
+    }
+}
 
 

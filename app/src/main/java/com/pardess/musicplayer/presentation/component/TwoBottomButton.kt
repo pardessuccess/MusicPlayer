@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.pardess.musicplayer.presentation.component.FullWidthButton
+import com.pardess.musicplayer.ui.theme.Gray300
+import com.pardess.musicplayer.ui.theme.PointColor
 
 @Composable
 fun TwoBottomButton(
@@ -18,8 +20,8 @@ fun TwoBottomButton(
     text2: String,
     onClick1: () -> Unit,
     onClick2: () -> Unit,
-    color1: Color = Color(0xFFF50057),
-    color2: Color = Color(0xFFFF9800),
+    color1: Color = PointColor,
+    color2: Color = Gray300,
 ) {
     Row(
         modifier = modifier.fillMaxWidth()

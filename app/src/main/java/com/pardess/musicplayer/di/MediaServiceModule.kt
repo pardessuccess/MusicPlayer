@@ -48,7 +48,7 @@ object MediaServiceModule {
 
     @Singleton
     @Provides
-    fun provideAudioAttributes() = AudioAttributes.Builder()
+    fun providesAudioAttributes() = AudioAttributes.Builder()
         .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
         .setUsage(C.USAGE_MEDIA)
         .build()
@@ -63,7 +63,6 @@ object MediaServiceModule {
             .setAudioAttributes(audioAttributes, true)
             .build()
     }
-
 
     @Singleton
     @Provides
