@@ -52,6 +52,25 @@ android {
 
 dependencies {
 
+    implementation(project(":core:common"))
+    implementation(project(":core:data"))
+    implementation(project(":core:database"))
+    implementation(project(":core:datastore"))
+    implementation(project(":core:designsystem"))
+    implementation(project(":core:domain"))
+    implementation(project(":core:media-query"))
+    implementation(project(":core:media-service"))
+    implementation(project(":core:model"))
+    implementation(project(":core:navigation"))
+    implementation(project(":core:ui"))
+
+    implementation(project(":feature:artist"))
+    implementation(project(":feature:home"))
+    implementation(project(":feature:playback"))
+    implementation(project(":feature:playlist"))
+    implementation(project(":feature:root"))
+    implementation(project(":feature:songs"))
+
     implementation(libs.lazycolumnscrollbar)
 
     implementation(libs.media3.ui)
