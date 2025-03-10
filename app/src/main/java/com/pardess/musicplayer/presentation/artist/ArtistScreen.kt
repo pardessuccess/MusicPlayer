@@ -35,7 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.domain.model.Artist
 import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.presentation.base.BaseScreen
-import com.pardess.musicplayer.presentation.component.MusicImage
+import com.pardess.musicplayer.presentation.common.component.MusicImage
 import com.pardess.musicplayer.presentation.navigation.Screen
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.NavigationBarHeight

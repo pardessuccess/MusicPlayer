@@ -4,6 +4,7 @@ import com.pardess.musicplayer.data.entity.SongEntity
 import com.pardess.musicplayer.data.entity.join.FavoriteSong
 import com.pardess.musicplayer.data.entity.join.HistorySong
 import com.pardess.musicplayer.data.entity.join.PlayCountSong
+import com.pardess.musicplayer.domain.model.SearchHistory
 import kotlinx.coroutines.flow.Flow
 
 interface ManageRepository {
@@ -13,6 +14,8 @@ interface ManageRepository {
     fun getHistorySongs(): Flow<List<HistorySong>>
 
     fun getPlayCountSongs(): Flow<List<PlayCountSong>>
+
+    fun getSearchHistory(): Flow<List<SearchHistory>>
 
     suspend fun upsertFavorite(songEntity: SongEntity)
 
@@ -24,11 +27,17 @@ interface ManageRepository {
 
     suspend fun insertSongEntity(songEntity: SongEntity)
 
+    suspend fun saveSearchHistory(searchHistory: SearchHistory)
+
     suspend fun removeFavorite(songId: Long)
 
     suspend fun removeHistory(timestamp: Long)
 
     suspend fun removePlayCount(songId: Long)
+
+    suspend fun deleteSearchHistory(searchId: Long)
+
+
 
 
 }

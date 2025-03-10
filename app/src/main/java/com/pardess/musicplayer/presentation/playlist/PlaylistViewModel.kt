@@ -3,6 +3,7 @@ package com.pardess.musicplayer.presentation.playlist
 import androidx.lifecycle.viewModelScope
 import com.pardess.musicplayer.data.entity.PlaylistEntity
 import com.pardess.musicplayer.domain.repository.PlaylistRepository
+import com.pardess.musicplayer.domain.usecase.playlist.PlaylistUseCase
 import com.pardess.musicplayer.presentation.base.BaseUiEffect
 import com.pardess.musicplayer.presentation.base.BaseUiEvent
 import com.pardess.musicplayer.presentation.base.BaseUiState
@@ -45,11 +46,10 @@ sealed class PlaylistUiEffect : BaseUiEffect {
 
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
-    private val playlistRepository: PlaylistRepository,
+    private val useCase: PlaylistUseCase,
 ) : BaseViewModel<PlaylistUiState, PlaylistUiEvent, PlaylistUiEffect>(PlaylistUiState()) {
 
-    private val playlists = playlistRepository.getAllPlaylist()
-        .map { list -> list.sortedWith(compareBy<PlaylistEntity> { it.pinnedAt != null }.thenBy { it.pinnedAt }) }
+    private val playlists = useCase.getPlaylists()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(),
@@ -86,9 +86,7 @@ class PlaylistViewModel @Inject constructor(
 
             PlaylistUiEvent.DeletePlaylists -> {
                 viewModelScope.launch {
-                    uiState.value.selectedPlaylistIds.let {
-                        playlistRepository.deletePlaylistsByIds(it)
-                    }
+                    useCase.deletePlaylist(uiState.value.selectedPlaylistIds)
                 }
                 updateState {
                     copy(
@@ -122,25 +120,13 @@ class PlaylistViewModel @Inject constructor(
 
     private fun changePlaylistsOrder(changedPlaylists: List<PlaylistEntity>) {
         viewModelScope.launch(Dispatchers.IO) {
-            changedPlaylists.forEachIndexed { index, playlist ->
-                playlist.displayOrder = index
-                playlistRepository.updatePlaylist(playlist)
-            }
+            useCase.changePlaylistOrder(changedPlaylists)
         }
     }
 
     private fun createPlaylist(playlistName: String) {
         viewModelScope.launch {
-            val newPlaylist = withContext(Dispatchers.IO) {
-                val currentPlaylists =
-                    playlistRepository.getAllPlaylist().firstOrNull() ?: emptyList()
-                val newDisplayOrder = currentPlaylists.size
-                val newPlaylist = PlaylistEntity(
-                    playlistName = playlistName,
-                    displayOrder = newDisplayOrder,
-                )
-                playlistRepository.createPlaylist(newPlaylist)
-            }
+            val newPlaylist = useCase.createPlaylist(playlistName)
             updateState {
                 copy(selectedPlaylist = newPlaylist)
             }

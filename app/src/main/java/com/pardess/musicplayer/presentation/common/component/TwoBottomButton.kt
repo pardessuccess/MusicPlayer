@@ -1,4 +1,4 @@
-package com.pardess.musicplayer.presentation.component
+package com.pardess.musicplayer.presentation.common.component
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.pardess.musicplayer.presentation.component.FullWidthButton
+import com.pardess.musicplayer.presentation.common.component.FullWidthButton
 import com.pardess.musicplayer.ui.theme.Gray300
 import com.pardess.musicplayer.ui.theme.PointColor
 

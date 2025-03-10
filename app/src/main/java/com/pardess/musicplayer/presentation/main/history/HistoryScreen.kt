@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.data.entity.join.HistorySong
 import com.pardess.musicplayer.presentation.base.BaseScreen
-import com.pardess.musicplayer.presentation.component.FullWidthButton
-import com.pardess.musicplayer.presentation.component.SongItem
+import com.pardess.musicplayer.presentation.common.component.FullWidthButton
+import com.pardess.musicplayer.presentation.common.component.SongItem
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.toSong
 import com.pardess.musicplayer.ui.theme.PointColor

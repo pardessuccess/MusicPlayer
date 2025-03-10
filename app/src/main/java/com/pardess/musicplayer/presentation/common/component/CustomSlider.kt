@@ -1,4 +1,4 @@
-package com.pardess.musicplayer.presentation.component
+package com.pardess.musicplayer.presentation.common.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

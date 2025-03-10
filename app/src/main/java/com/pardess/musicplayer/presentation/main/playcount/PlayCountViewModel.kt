@@ -3,6 +3,7 @@ package com.pardess.musicplayer.presentation.main.playcount
 import androidx.lifecycle.viewModelScope
 import com.pardess.musicplayer.data.entity.join.PlayCountSong
 import com.pardess.musicplayer.domain.repository.ManageRepository
+import com.pardess.musicplayer.domain.usecase.main.MainDetailUseCase
 import com.pardess.musicplayer.presentation.base.BaseUiEffect
 import com.pardess.musicplayer.presentation.base.BaseUiEvent
 import com.pardess.musicplayer.presentation.base.BaseUiState
@@ -22,10 +23,10 @@ sealed class PlayCountUiEvent : BaseUiEvent
 
 @HiltViewModel
 class PlayCountViewModel @Inject constructor(
-    manageRepository: ManageRepository
+    useCase: MainDetailUseCase
 ) : BaseViewModel<PlayCountUiState, PlayCountUiEvent, PlayCountUiEffect>(PlayCountUiState()) {
 
-    private val playCountSongs = manageRepository.getPlayCountSongs().stateIn(
+    private val playCountSongs = useCase.getPlayCountSongs().stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(),
         emptyList()

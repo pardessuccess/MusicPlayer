@@ -4,8 +4,8 @@ import android.content.ContentResolver
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.MediaStore
-import com.pardess.musicplayer.Constants.songProjection
-import com.pardess.musicplayer.IS_MUSIC
+import com.pardess.musicplayer.utils.Constants.songProjection
+import com.pardess.musicplayer.utils.IS_MUSIC
 import com.pardess.musicplayer.data.SongSortOrder
 import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.utils.Utils.isOverR

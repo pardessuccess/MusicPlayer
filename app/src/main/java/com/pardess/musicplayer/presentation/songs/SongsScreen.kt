@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.pardess.musicplayer.domain.model.Song
-import com.pardess.musicplayer.presentation.component.SongItem
+import com.pardess.musicplayer.presentation.common.component.SongItem
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.NavigationBarHeight
@@ -31,7 +31,7 @@ import my.nanihadesuka.compose.ScrollbarSettings
 
 @Composable
 fun SongsScreen(
-    navigateToRoute: (String) -> Unit,
+    onNavigateToRoute: (String) -> Unit,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
     allSongs: List<Song>
 ) {

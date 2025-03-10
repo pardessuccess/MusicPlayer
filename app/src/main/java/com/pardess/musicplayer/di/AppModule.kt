@@ -18,15 +18,14 @@ import com.pardess.musicplayer.data.repository.ManageRepositoryImpl
 import com.pardess.musicplayer.data.repository.MusicRepositoryImpl
 import com.pardess.musicplayer.data.repository.PlaylistRepositoryImpl
 import com.pardess.musicplayer.data.repository.PrefRepositoryImpl
-import com.pardess.musicplayer.data.repository.SearchRepositoryImpl
 //import com.pardess.musicplayer.data.service.notification.PlaybackNotificationOver24
 import com.pardess.musicplayer.domain.repository.ManageRepository
 import com.pardess.musicplayer.domain.repository.MusicRepository
 import com.pardess.musicplayer.domain.repository.PlaylistRepository
 import com.pardess.musicplayer.domain.repository.PrefRepository
-import com.pardess.musicplayer.domain.repository.SearchRepository
-import com.pardess.musicplayer.domain.usecase.media_player.MediaPlayerListenerUseCase
-import com.pardess.musicplayer.domain.usecase.media_player.MediaPlayerListenerUseCaseImpl
+import com.pardess.musicplayer.domain.usecase.playback.PlaybackUseCase
+import com.pardess.musicplayer.domain.usecase.playback.PlaybackUseCaseImpl
+import com.pardess.musicplayer.domain.usecase.playback.media_player.MediaPlayerUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -71,25 +70,34 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun providesSearchRepository(
-        searchDao: SearchDao
-    ): SearchRepository {
-        return SearchRepositoryImpl(searchDao)
-    }
-
-    @Provides
-    @Singleton
     fun providesManageRepository(
         favoriteDao: FavoriteDao,
         historyDao: HistoryDao,
         playCountDao: PlayCountDao,
-        songDao: SongDao
+        songDao: SongDao,
+        searchDao: SearchDao
     ): ManageRepository {
         return ManageRepositoryImpl(
             favoriteDao,
             historyDao,
             playCountDao,
-            songDao
+            songDao,
+            searchDao
+        )
+    }
+
+    @Provides
+    fun providePlaybackUseCase(
+        mediaPlayerUseCase: MediaPlayerUseCase,
+        musicRepository: MusicRepository,
+        manageRepository: ManageRepository,
+        prefRepository: PrefRepository,
+    ): PlaybackUseCase {
+        return PlaybackUseCaseImpl(
+            mediaPlayerUseCase,
+            musicRepository,
+            manageRepository,
+            prefRepository
         )
     }
 
@@ -122,4 +130,5 @@ object AppModule {
     fun provideUserPreferences(@ApplicationContext context: Context): UserPreferences {
         return UserPreferencesImpl(context)
     }
+
 }

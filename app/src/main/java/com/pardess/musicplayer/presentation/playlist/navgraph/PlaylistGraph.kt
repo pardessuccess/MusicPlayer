@@ -4,6 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
@@ -19,7 +20,7 @@ import com.pardess.musicplayer.presentation.playlist.detail.DetailPlaylistViewMo
 import com.pardess.musicplayer.presentation.playlist.detail.PlaylistDetailScreen
 
 fun NavGraphBuilder.playlistGraph(
-    onNavigateToRoute: (String) -> Unit,
+    navigate: (String, NavBackStackEntry) -> Unit,
     upPress: () -> Unit,
     allSongsState: State<List<Song>>,
     onPlaybackEvent: (PlaybackEvent) -> Unit
@@ -28,9 +29,9 @@ fun NavGraphBuilder.playlistGraph(
         route = Navigation.Playlist.route,
         startDestination = HomeScreen.Playlist.route,
     ) {
-        composable(HomeScreen.Playlist.route) {
+        composable(HomeScreen.Playlist.route) { backStackEntry ->
             PlaylistScreen(
-                onNavigateToRoute = onNavigateToRoute,
+                onNavigateToRoute = { navigate(it, backStackEntry) },
             )
         }
         composable(

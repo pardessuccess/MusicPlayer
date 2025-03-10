@@ -1,10 +1,9 @@
-package com.pardess.musicplayer.domain.usecase.media_player
+package com.pardess.musicplayer.domain.usecase.playback.media_player
 
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import com.pardess.musicplayer.data.mapper.toSong
 import com.pardess.musicplayer.data.service.MediaControllerManager
-import com.pardess.musicplayer.domain.repository.ManageRepository
 import com.pardess.musicplayer.presentation.playback.PlayerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,15 +27,19 @@ import javax.inject.Inject
 
 interface MediaPlayerListenerUseCase {
     fun playerStateFlow(): Flow<PlayerState>
+
+    val isSessionReady: Flow<Boolean>
 }
 
 class MediaPlayerListenerUseCaseImpl @Inject constructor(
     private val mediaControllerManager: MediaControllerManager,
-    private val manageRepository: ManageRepository,
 ) : MediaPlayerListenerUseCase {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
     private var timerJob: Job? = null
+
+    private val _isSessionReady = MutableStateFlow(false)
+    override val isSessionReady: Flow<Boolean> = _isSessionReady
 
     override fun playerStateFlow(): Flow<PlayerState> = callbackFlow {
         val mediaController = mediaControllerManager.mediaControllerFlow.first()
@@ -78,7 +81,7 @@ class MediaPlayerListenerUseCaseImpl @Inject constructor(
 
             override fun onPlaybackStateChanged(state: Int) {
                 super.onPlaybackStateChanged(state)
-                println("@@@@@ Playback state changed $state")
+                _isSessionReady.value = (state == Player.STATE_READY)
             }
 
             override fun onTracksChanged(tracks: Tracks) {

@@ -1,12 +1,15 @@
 package com.pardess.musicplayer.presentation.main.search
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.pardess.musicplayer.domain.model.Album
 import com.pardess.musicplayer.domain.model.Artist
 import com.pardess.musicplayer.domain.model.SearchHistory
 import com.pardess.musicplayer.domain.model.SearchType
 import com.pardess.musicplayer.domain.model.Song
-import com.pardess.musicplayer.domain.repository.SearchRepository
+import com.pardess.musicplayer.domain.usecase.main.MainUseCase
+import com.pardess.musicplayer.domain.usecase.main.SearchUseCase
+import com.pardess.musicplayer.presentation.Status
 import com.pardess.musicplayer.presentation.base.BaseUiEffect
 import com.pardess.musicplayer.presentation.base.BaseUiEvent
 import com.pardess.musicplayer.presentation.base.BaseUiState
@@ -19,17 +22,21 @@ import com.pardess.musicplayer.utils.Utils.getArtistsFromSongs
 import com.pardess.musicplayer.utils.Utils.isChosungOnly
 import com.pardess.musicplayer.utils.Utils.normalizeText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
 data class SearchUiState(
     val allSongs: List<Song> = emptyList(),
     val searchQuery: String = "",
-    val searchResult: SearchResult = SearchResult()
+    val searchResult: Status<SearchResult> = Status.Loading
 ) : BaseUiState
 
 sealed class SearchUiEffect : BaseUiEffect {
@@ -51,19 +58,26 @@ data class SearchResult(
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val searchRepository: SearchRepository
+    private val useCase: SearchUseCase,
+    savedStateHandle: SavedStateHandle
 ) : BaseViewModel<SearchUiState, SearchUiEvent, SearchUiEffect>(SearchUiState()) {
 
     private val allSongs = MutableStateFlow<List<Song>>(emptyList())
-    private val searchResults = MutableStateFlow(SearchResult())
+    private val searchResults = MutableStateFlow<Status<SearchResult>>(Status.Loading)
+
+    private var initialSearchQuery =
+        savedStateHandle.get<String>("searchQuery") ?: ""
 
     init {
         viewModelScope.launch {
-            combine(uiState, allSongs, searchResults) { baseState, allSongs, results ->
-                baseState.copy(
-                    allSongs = allSongs,
-                    searchResult = results
-                )
+            combine(allSongs, searchResults) { songs, results ->
+                updateState {
+                    copy(
+                        allSongs = songs,
+                        searchQuery = uiState.value.searchQuery.ifBlank { initialSearchQuery },
+                        searchResult = results
+                    )
+                }
             }.launchIn(viewModelScope)
         }
     }
@@ -71,21 +85,24 @@ class SearchViewModel @Inject constructor(
     override fun onEvent(event: SearchUiEvent) {
         when (event) {
             is SearchUiEvent.Search -> {
+                updateState { copy(searchQuery = event.query) }
                 search(event.query)
-                saveSearchHistory(null, event.query, SearchType.TEXT)
+                if (event.query.isNotEmpty()) {
+                    saveSearchHistory(null, event.query, SearchType.TEXT)
+                }
             }
 
             is SearchUiEvent.SelectSong -> saveSearchHistory(
                 image = event.song.data,
-                event.song.title,
-                SearchType.SONG
+                text = event.song.title,
+                type = SearchType.SONG
             )
 
             is SearchUiEvent.SelectArtist -> {
                 saveSearchHistory(
                     image = event.artist.songs.firstOrNull()?.data,
-                    event.artist.name,
-                    SearchType.ARTIST
+                    text = event.artist.name,
+                    type = SearchType.ARTIST
                 )
                 sendEffect(SearchUiEffect.Navigate(HomeScreen.Artist.route + "/${event.artist.id}"))
             }
@@ -93,7 +110,8 @@ class SearchViewModel @Inject constructor(
             is SearchUiEvent.SelectAlbum -> {
                 saveSearchHistory(
                     image = event.album.songs.firstOrNull()?.data,
-                    event.album.title, SearchType.ALBUM
+                    text = event.album.title,
+                    type = SearchType.ALBUM
                 )
                 sendEffect(SearchUiEffect.Navigate(Screen.DetailArtist.route + "/${event.album.artistId}/${event.album.id}"))
             }
@@ -102,7 +120,7 @@ class SearchViewModel @Inject constructor(
 
     private fun saveSearchHistory(image: String?, text: String, type: SearchType) {
         viewModelScope.launch {
-            searchRepository.saveSearchHistory(
+            useCase.saveSearchHistory(
                 SearchHistory(
                     id = 0,
                     image = image,
@@ -114,46 +132,38 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    fun search(query: String) {
+    private fun search(query: String) {
         val normalizedQuery = normalizeText(query)
-        val useChosungSearch = isChosungOnly(query)
-
         if (normalizedQuery.isBlank()) {
-            searchResults.value = SearchResult()
+            searchResults.value = Status.Error("검색어를 입력해주세요.")
             return
         }
-
-        val filteredSongs = allSongs.value.filter {
-            val title = normalizeText(it.title)
-            if (useChosungSearch) extractChosung(title).contains(query)
-            else title.contains(normalizedQuery)
-        }
-
-        val filteredArtists = allSongs.value
-            .filter { normalizeText(it.artistName).contains(normalizedQuery) }
-            .getArtistsFromSongs()
-
-        val filteredAlbums = allSongs.value
-            .filter { normalizeText(it.albumName).contains(normalizedQuery) }
-            .getAlbumsFromSongs()
-
-        searchResults.value = SearchResult(
-            songs = filteredSongs,
-            artists = filteredArtists,
-            albums = filteredAlbums
-        )
-    }
-
-    private fun setSearchQuery(query: String) {
-        updateState {
-            uiState.value.copy(searchQuery = query)
+        viewModelScope.launch {
+            combine(
+                useCase.searchSongs(normalizedQuery, allSongs.value),
+                useCase.searchArtists(normalizedQuery, allSongs.value),
+                useCase.searchAlbums(normalizedQuery, allSongs.value)
+            ) { songsResult, artistsResult, albumsResult ->
+                if (songsResult is Status.Loading || artistsResult is Status.Loading || albumsResult is Status.Loading) {
+                    Status.Loading
+                } else {
+                    val songs = (songsResult as Status.Success).data
+                    val artists = (artistsResult as Status.Success).data
+                    val albums = (albumsResult as Status.Success).data
+                    Status.Success(SearchResult(songs, artists, albums))
+                }
+            }.collectLatest { result ->
+                searchResults.value = result
+            }
         }
     }
 
-    fun initSearch(query: String, songs: List<Song>) {
-        setSearchQuery(query)
-        allSongs.value = songs
-        println(allSongs.value)
-        search(uiState.value.searchQuery)
+    fun setAllSongs(songs: List<Song>) = viewModelScope.launch {
+        withContext(Dispatchers.IO) {
+            allSongs.value = songs
+            if (songs.isNotEmpty() && initialSearchQuery.isNotBlank()) {
+                search(initialSearchQuery)
+            }
+        }
     }
 }

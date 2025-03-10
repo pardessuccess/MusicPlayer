@@ -1,4 +1,4 @@
-package com.pardess.musicplayer
+package com.pardess.musicplayer.utils
 
 import android.Manifest
 import android.os.Build

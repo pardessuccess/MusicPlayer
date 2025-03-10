@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pardess.musicplayer.domain.model.Album
 import com.pardess.musicplayer.domain.model.Song
-import com.pardess.musicplayer.presentation.component.MusicImage
-import com.pardess.musicplayer.presentation.component.SongItem
+import com.pardess.musicplayer.presentation.common.component.MusicImage
+import com.pardess.musicplayer.presentation.common.component.SongItem
 import com.pardess.musicplayer.presentation.main.search.AlbumItem
 import com.pardess.musicplayer.ui.theme.PointColor
 import my.nanihadesuka.compose.LazyColumnScrollbar

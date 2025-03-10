@@ -1,4 +1,4 @@
-package com.pardess.musicplayer.presentation.component
+package com.pardess.musicplayer.presentation.common.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable

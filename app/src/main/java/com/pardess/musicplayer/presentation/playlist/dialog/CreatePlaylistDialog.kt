@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -55,11 +54,10 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.pardess.musicplayer.R
-import com.pardess.musicplayer.presentation.component.FullWidthButton
+import com.pardess.musicplayer.presentation.common.component.FullWidthButton
 import com.pardess.musicplayer.presentation.playlist.PlaylistUiEvent
 import com.pardess.musicplayer.ui.theme.Gray300
 import com.pardess.musicplayer.ui.theme.PointColor
-import com.pardess.musicplayer.ui.theme.PointColor3
 import com.pardess.musicplayer.ui.theme.TextColor
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -107,22 +105,9 @@ fun CreatePlaylistDialog(
             name = it
         },
         setSpeechStatus = {
-            when (it) {
-                SpeechStatus.READY -> {
-                    isRecording = true
-                }
-
-                SpeechStatus.COMPLETE -> {
-                    isRecording = false
-                }
-
-                SpeechStatus.ERROR -> {
-                    isRecording = false
-                }
-
-                SpeechStatus.IN_PROGRESS -> {
-                    isRecording = true
-                }
+            isRecording = when (it) {
+                SpeechStatus.READY, SpeechStatus.IN_PROGRESS -> true
+                SpeechStatus.COMPLETE, SpeechStatus.ERROR -> false
             }
         }
     )

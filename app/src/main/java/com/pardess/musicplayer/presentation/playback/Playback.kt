@@ -41,7 +41,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,17 +59,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.domain.model.Song
-import com.pardess.musicplayer.presentation.component.CustomSlider
-import com.pardess.musicplayer.presentation.component.CustomSliderDefaults
-import com.pardess.musicplayer.presentation.component.FullWidthButton
-import com.pardess.musicplayer.presentation.component.MusicImage
-import com.pardess.musicplayer.presentation.component.progress
-import com.pardess.musicplayer.presentation.component.track
+import com.pardess.musicplayer.presentation.common.component.CustomSlider
+import com.pardess.musicplayer.presentation.common.component.CustomSliderDefaults
+import com.pardess.musicplayer.presentation.common.component.FullWidthButton
+import com.pardess.musicplayer.presentation.common.component.MusicImage
+import com.pardess.musicplayer.presentation.common.component.progress
+import com.pardess.musicplayer.presentation.common.component.track
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.PointBackgroundColor
 import com.pardess.musicplayer.utils.Utils.toTime
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun Playback(
@@ -78,7 +76,7 @@ fun Playback(
     onPlaybackUiEvent: (PlaybackEvent) -> Unit,
     onEvent: (PlaybackEvent) -> Unit,
 ) {
-    if (playbackUiState.playerState.currentSong == null) return // 🎵 현재 재생 중인 노래가 없으면 UI 숨김
+    if (playbackUiState.playerState.currentSong == null) return // 현재 재생 중인 노래가 없으면 UI 숨김
 
     var offsetX by remember { mutableFloatStateOf(0f) }
 
@@ -104,14 +102,14 @@ fun Playback(
         if (isPlaying) {
             iconResId = R.drawable.ic_round_pause
         } else {
-            delay(100)
+            delay(250)
             iconResId = R.drawable.ic_round_play_arrow
         }
     }
 
     BackHandler(enabled = playbackUiState.expand) {
         if (playbackUiState.expand) {
-            onPlaybackUiEvent(PlaybackEvent.ExpandPanel)
+            onPlaybackUiEvent(PlaybackEvent.PlaybackExpand)
         }
     }
 
@@ -214,7 +212,7 @@ fun HomeBottomBarItem(
                     strokeWidth = strokeWidth
                 )
             }
-            .clickable(onClick = { onEvent(PlaybackEvent.ExpandPanel) }),
+            .clickable(onClick = { onEvent(PlaybackEvent.PlaybackExpand) }),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

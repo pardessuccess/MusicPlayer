@@ -4,7 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pardess.musicplayer.domain.model.Album
+import com.pardess.musicplayer.domain.model.Artist
 import com.pardess.musicplayer.domain.repository.MusicRepository
+import com.pardess.musicplayer.domain.usecase.artist.ArtistUseCase
 import com.pardess.musicplayer.presentation.Status
 import com.pardess.musicplayer.presentation.base.BaseUiEffect
 import com.pardess.musicplayer.presentation.base.BaseUiEvent
@@ -44,27 +46,18 @@ sealed class DetailAlbumUiEvent : BaseUiEvent {
 
 @HiltViewModel
 class DetailAlbumViewModel @Inject constructor(
-    repository: MusicRepository,
+    useCase: ArtistUseCase,
     savedStateHandle: SavedStateHandle
 ) : BaseViewModel<DetailAlbumUiState, DetailAlbumUiEvent, DetailAlbumUiEffect>(DetailAlbumUiState()) {
 
     private val artistId = savedStateHandle.get<Long>("artistId") ?: 0L
     private val albumId = MutableStateFlow(savedStateHandle.get<Long>("albumId") ?: -1L)
-
-    private val albumsFlow: StateFlow<Status<List<Album>>> = repository.getAlbumsByArtist(artistId)
-        .map { Status.Success(it) as Status<List<Album>> }
-        .onStart { emit(Status.Loading) }
-        .catch { emit(Status.Error(it.message ?: "Unknown Error")) }
+    private val albumsFlow: StateFlow<Status<List<Album>>> = useCase.getAlbumsByArtist(artistId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Status.Loading)
 
-    private val albumFlow: StateFlow<Status<Album>> = albumsFlow.map { status ->
-        if (status is Status.Success) {
-            val album = status.data.firstOrNull { it.id == albumId.value }
-            album?.let { Status.Success(it) } ?: Status.Error("앨범을 찾을 수 없습니다.")
-        } else {
-            Status.Loading
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Status.Loading)
+    private val albumFlow: StateFlow<Status<Album>> =
+        useCase.getAlbum(artistId = artistId, albumId = albumId.value)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Status.Loading)
 
     init {
         viewModelScope.launch {
@@ -72,6 +65,7 @@ class DetailAlbumViewModel @Inject constructor(
                 updateState {
                     copy(albumState = album, albumsState = albums)
                 }
+                println("@@@@ Album: $album $albums")
             }.launchIn(viewModelScope)
         }
     }
