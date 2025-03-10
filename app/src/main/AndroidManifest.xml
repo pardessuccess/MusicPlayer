@@ -31,7 +31,7 @@
         android:theme="@style/Theme.MusicPlayer"
         tools:targetApi="tiramisu">
         <activity
-            android:name=".presentation.MainActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.MusicPlayer">
@@ -42,15 +42,6 @@
             </intent-filter>
         </activity>
 
-<!--        <service-->
-<!--            android:name=".data.service.MusicService"-->
-<!--            android:exported="true"-->
-<!--            android:foregroundServiceType="mediaPlayback">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="androidx.media3.session.MediaSessionService" />-->
-<!--            </intent-filter>-->
-<!--        </service>-->
-
         <service
             android:name=".data.service.MediaPlayerService"
             android:exported="true"
@@ -59,7 +50,6 @@
                 <action android:name="androidx.media3.session.MediaSessionService" />
             </intent-filter>
         </service>
-
     </application>
 
 </manifest>
