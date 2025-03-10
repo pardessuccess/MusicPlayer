@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pardess.musicplayer.data.entity.PlaylistEntity
 import com.pardess.musicplayer.data.entity.PlaylistSong
 import com.pardess.musicplayer.domain.repository.PlaylistRepository
+import com.pardess.musicplayer.domain.usecase.playlist.PlaylistUseCase
 import com.pardess.musicplayer.presentation.base.BaseUiEffect
 import com.pardess.musicplayer.presentation.base.BaseUiEvent
 import com.pardess.musicplayer.presentation.base.BaseUiState
@@ -40,15 +41,15 @@ sealed class DetailPlaylistUiEffect : BaseUiEffect {
 
 @HiltViewModel
 class DetailPlaylistViewModel @Inject constructor(
-    private val playlistRepository: PlaylistRepository,
-    savedStateHandle: SavedStateHandle
+    private val useCase: PlaylistUseCase,
+    savedStateHandle: SavedStateHandle,
 ) : BaseViewModel<DetailPlaylistUiState, DetailPlaylistUiEvent, DetailPlaylistUiEffect>(
     DetailPlaylistUiState()
 ) {
 
     private val playlistId = savedStateHandle.get<Long>("playlistId") ?: 0L
 
-    private val playlistWithSongs = playlistRepository.getPlaylistWithSongs(playlistId).stateIn(
+    private val playlistWithSongs = useCase.getPlaylistSongs(playlistId).stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
         initialValue = null,
@@ -68,7 +69,7 @@ class DetailPlaylistViewModel @Inject constructor(
         when (event) {
             DetailPlaylistUiEvent.SaveSongToPlaylist -> {
                 viewModelScope.launch {
-                    playlistRepository.insertSongEntities(uiState.value.selectedSongs)
+                    useCase.savePlaylistSongs(uiState.value.selectedSongs)
                 }
                 updateState {
                     copy(
@@ -100,11 +101,10 @@ class DetailPlaylistViewModel @Inject constructor(
 
             DetailPlaylistUiEvent.DeleteSelectedSongs -> {
                 viewModelScope.launch {
-                    val selectedSongs = uiState.value.selectedSongs
-                    val playlistSongs = uiState.value.playlistSongs
-                    val songsToDelete =
-                        playlistSongs.filter { it.songPrimaryKey in selectedSongs.map { it.songPrimaryKey } }
-                    playlistRepository.deleteSongEntities(songsToDelete)
+                    useCase.deletePlaylistSongs(
+                        uiState.value.selectedSongs,
+                        uiState.value.playlistSongs
+                    )
                 }
                 updateState {
                     copy(

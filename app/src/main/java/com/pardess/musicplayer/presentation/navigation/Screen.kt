@@ -4,10 +4,6 @@ enum class Screen(
     val title: String,
     val route: String,
 ) {
-    Main("MainScreen", "main_screen"),
-    Playlist("PlaylistScreen", "playlist_screen"),
-    Artist("ArtistScreen", "artist_screen"),
-    Songs("SongsScreen", "songs_screen"),
     DetailArtist("DetailArtistScreen", "artist_screen"),
     DetailPlaylist("DetailPlaylistScreen", "detail_playlist_screen"),
     Search("SearchScreen", "search_screen"),

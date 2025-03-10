@@ -1,4 +1,4 @@
-package com.pardess.musicplayer.domain.usecase.media_player
+package com.pardess.musicplayer.domain.usecase.playback.media_player
 
 import android.os.Bundle
 import androidx.annotation.OptIn
@@ -6,22 +6,27 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
+import androidx.media3.session.MediaSession
 import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.data.service.MediaControllerManager
 import com.pardess.musicplayer.presentation.playback.PlayerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import java.time.Duration
 import javax.inject.Inject
 
 interface MediaPlayerUseCase {
+
     fun playerStateFlow(): Flow<PlayerState>
     fun initMediaController()
+
     fun addMediaItems(songs: List<Song>)
-    fun play(index: Int)
+    fun play()
     fun resume()
     fun pause()
     fun stop()
@@ -80,9 +85,10 @@ class MediaPlayerUseCaseImpl @Inject constructor(
         mediaController?.setMediaItems(mediaItems)
     }
 
-    override fun play(index: Int) {
+    override fun play() {
         mediaController?.apply {
-            seekToDefaultPosition(index)
+            if (connectedToken == null) return
+            seekToDefaultPosition(0)
             playWhenReady = true
             prepare()
         }
@@ -116,11 +122,7 @@ class MediaPlayerUseCaseImpl @Inject constructor(
     }
 
     override fun repeat(repeatMode: Int) {
-        mediaController?.repeatMode = when (repeatMode) {
-            MediaController.REPEAT_MODE_ONE -> MediaController.REPEAT_MODE_ONE
-            MediaController.REPEAT_MODE_ALL -> MediaController.REPEAT_MODE_ALL
-            else -> MediaController.REPEAT_MODE_OFF
-        }
+        mediaController?.repeatMode = repeatMode
     }
 
     override fun shuffle(shuffle: Boolean) {

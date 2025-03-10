@@ -3,6 +3,7 @@ package com.pardess.musicplayer.presentation.main.history
 import androidx.lifecycle.viewModelScope
 import com.pardess.musicplayer.data.entity.join.HistorySong
 import com.pardess.musicplayer.domain.repository.ManageRepository
+import com.pardess.musicplayer.domain.usecase.main.MainDetailUseCase
 import com.pardess.musicplayer.presentation.base.BaseUiEffect
 import com.pardess.musicplayer.presentation.base.BaseUiEvent
 import com.pardess.musicplayer.presentation.base.BaseUiState
@@ -27,10 +28,10 @@ sealed class HistoryEffect : BaseUiEffect {
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
-    private val manageRepository: ManageRepository
+    private val useCase: MainDetailUseCase
 ) : BaseViewModel<HistoryUiState, HistoryUiEvent, HistoryEffect>(HistoryUiState()) {
 
-    private val historySongs = manageRepository.getHistorySongs().stateIn(
+    private val historySongs = useCase.getHistorySongs().stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(),
         emptyList()
@@ -52,7 +53,7 @@ class HistoryViewModel @Inject constructor(
 
     private fun resetHistory() {
         viewModelScope.launch {
-            manageRepository.resetHistory()
+            useCase.resetHistory()
             sendEffect(HistoryEffect.HistoryRemoved)
         }
     }

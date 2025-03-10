@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.pardess.musicplayer.domain.model.Album
 import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.domain.repository.MusicRepository
+import com.pardess.musicplayer.domain.usecase.artist.ArtistUseCase
 import com.pardess.musicplayer.presentation.Status
 import com.pardess.musicplayer.presentation.base.BaseUiEffect
 import com.pardess.musicplayer.presentation.base.BaseUiEvent
@@ -41,7 +42,7 @@ sealed class DetailArtistUiEvent : BaseUiEvent {
 
 @HiltViewModel
 class DetailArtistViewModel @Inject constructor(
-    repository: MusicRepository,
+    useCase: ArtistUseCase,
     savedStateHandle: SavedStateHandle
 ) : BaseViewModel<DetailArtistUiState, DetailArtistUiEvent, DetailArtistUiEffect>(
     DetailArtistUiState()
@@ -50,25 +51,14 @@ class DetailArtistViewModel @Inject constructor(
     private val artistId = savedStateHandle.get<Long>("artistId") ?: 0L
 
     private val artistSongsState: StateFlow<Status<List<Song>>> =
-        repository.getSongsByArtist(artistId)
-            .map {
-                delay(2000)
-                Status.Success(it) as Status<List<Song>>
-            }
-            .onStart { emit(Status.Loading) }
-            .catch { emit(Status.Error(it.message ?: "Unknown Error")) }
+        useCase.getSongsByArtist(artistId)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = Status.Loading
             )
     private val artistAlbumsState: StateFlow<Status<List<Album>>> =
-        repository.getAlbumsByArtist(artistId).map {
-            Status.Success(it) as Status<List<Album>>
-        }.onStart { emit(Status.Loading) }
-            .catch {
-                emit(Status.Error(it.message ?: "Unknown Error"))
-            }
+        useCase.getAlbumsByArtist(artistId)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),

@@ -30,6 +30,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -89,13 +92,17 @@ private fun PlaylistScreen(
     uiState: PlaylistUiState,
     onEvent: (PlaylistUiEvent) -> Unit,
 ) {
+    val playlists = remember { mutableStateListOf<PlaylistEntity>() }
     val lazyListState = rememberLazyListState()
+
+    LaunchedEffect(uiState.playlists) {
+        playlists.clear()
+        playlists.addAll(uiState.playlists)
+    }
     val dragAndDropListState = rememberDragAndDropListState(lazyListState) { from, to ->
-        if (to in 0 until uiState.playlists.size) {
-            onEvent(PlaylistUiEvent.ChangePlaylistOrder(uiState.playlists.toMutableList().apply {
-                move(from, to)
-            }))
-        }
+        if (to < 0 || to >= playlists.size) return@rememberDragAndDropListState
+        playlists.move(from, to)
+        onEvent(PlaylistUiEvent.ChangePlaylistOrder(playlists))
     }
     Box(
         modifier = Modifier
@@ -267,7 +274,6 @@ fun PlaylistActions(
 fun Header() {
 
 }
-
 
 
 // 드래그 제스처를 감지할 Modifier

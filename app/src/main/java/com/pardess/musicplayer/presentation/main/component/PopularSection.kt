@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.domain.model.Album
 import com.pardess.musicplayer.domain.model.Artist
-import com.pardess.musicplayer.presentation.component.MusicImage
+import com.pardess.musicplayer.presentation.common.component.MusicImage
 import com.pardess.musicplayer.presentation.main.MainUiEvent
 import com.pardess.musicplayer.presentation.navigation.Screen
 import com.pardess.musicplayer.ui.theme.BackgroundColor

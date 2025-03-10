@@ -1,8 +1,5 @@
 package com.pardess.musicplayer.presentation.artist.detail
 
-import androidx.compose.animation.core.animateDp
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,19 +14,9 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.presentation.Status
@@ -37,11 +24,11 @@ import com.pardess.musicplayer.presentation.artist.detail.component.ArtistAlbums
 import com.pardess.musicplayer.presentation.artist.detail.component.ArtistSongsSection
 import com.pardess.musicplayer.presentation.artist.detail.component.HorizontalPagerIndicator
 import com.pardess.musicplayer.presentation.base.BaseScreen
+import com.pardess.musicplayer.presentation.common.component.ErrorView
+import com.pardess.musicplayer.presentation.common.component.LoadingView
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.playback.RepeatMode
 import com.pardess.musicplayer.ui.theme.BackgroundColor
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun DetailArtistScreen(
@@ -118,7 +105,11 @@ private fun ArtistSongsPage(
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (songsState) {
             is Status.Loading -> LoadingView()
-            is Status.Error -> ErrorView(songsState.message)
+            is Status.Error -> ErrorView(
+                modifier = Modifier.align(Alignment.Center),
+                songsState.message
+            )
+
             is Status.Success -> ArtistSongsSection(
                 songs = songsState.data,
                 songListState = songListState,
@@ -142,10 +133,14 @@ private fun ArtistAlbumsPage(
 ) {
     val albumListState = rememberLazyGridState()
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         when (albumsState) {
             is Status.Loading -> LoadingView()
-            is Status.Error -> ErrorView(albumsState.message)
+            is Status.Error -> ErrorView(
+                modifier = Modifier.align(Alignment.Center),
+                albumsState.message
+            )
+
             is Status.Success -> ArtistAlbumsSection(
                 albums = albumsState.data,
                 albumListState = albumListState,
@@ -157,14 +152,4 @@ private fun ArtistAlbumsPage(
             )
         }
     }
-}
-
-@Composable
-private fun LoadingView() {
-    CircularProgressIndicator()
-}
-
-@Composable
-private fun ErrorView(message: String) {
-    Text(text = "Error: $message", color = Color.Red)
 }

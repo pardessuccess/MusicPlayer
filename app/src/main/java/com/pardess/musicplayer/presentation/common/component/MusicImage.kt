@@ -1,4 +1,4 @@
-package com.pardess.musicplayer.presentation.component
+package com.pardess.musicplayer.presentation.common.component
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image

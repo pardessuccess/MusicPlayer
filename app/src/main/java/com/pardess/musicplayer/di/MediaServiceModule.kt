@@ -17,6 +17,8 @@ import com.pardess.musicplayer.data.service.ConnectedMediaController
 import com.pardess.musicplayer.data.service.MediaControllerManager
 import com.pardess.musicplayer.data.service.notification.MediaNotificationManager
 import com.pardess.musicplayer.data.service.notification.Notifier
+import com.pardess.musicplayer.domain.usecase.playlist.PlaylistUseCase
+import com.pardess.musicplayer.domain.usecase.playlist.PlaylistUseCaseImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -40,6 +42,7 @@ abstract class MediaServiceBinds {
     abstract fun bindsMediaControllerManager(
         mediaControllerManager: ConnectedMediaController
     ): MediaControllerManager
+
 }
 
 @Module

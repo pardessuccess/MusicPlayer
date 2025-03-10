@@ -3,6 +3,7 @@ package com.pardess.musicplayer.presentation.main.favorite
 import androidx.lifecycle.viewModelScope
 import com.pardess.musicplayer.data.entity.join.FavoriteSong
 import com.pardess.musicplayer.domain.repository.ManageRepository
+import com.pardess.musicplayer.domain.usecase.main.MainDetailUseCase
 import com.pardess.musicplayer.presentation.base.BaseUiEffect
 import com.pardess.musicplayer.presentation.base.BaseUiEvent
 import com.pardess.musicplayer.presentation.base.BaseUiState
@@ -31,10 +32,10 @@ sealed class FavoriteUiEffect : BaseUiEffect {
 
 @HiltViewModel
 class FavoriteViewModel @Inject constructor(
-    private val manageRepository: ManageRepository
+    private val useCase: MainDetailUseCase
 ) : BaseViewModel<FavoriteUiState, FavoriteUiEvent, FavoriteUiEffect>(FavoriteUiState()) {
 
-    private val favoriteSongs = manageRepository.getFavoriteSongs().stateIn(
+    private val favoriteSongs = useCase.getFavoriteSongs().stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(),
         emptyList()
@@ -62,17 +63,13 @@ class FavoriteViewModel @Inject constructor(
             }
 
             FavoriteUiEvent.RemoveFavorite -> {
-                removeFavorite()
+                val favoriteSong = uiState.value.selectedFavoriteSong ?: return
+                viewModelScope.launch {
+                    useCase.deleteFavoriteSong(favoriteSong.song.id)
+                    updateState { copy(showRemoveDialog = false, selectedFavoriteSong = null) }
+                    sendEffect(FavoriteUiEffect.FavoriteDelete)
+                }
             }
-        }
-    }
-
-    private fun removeFavorite() {
-        val favoriteSong = uiState.value.selectedFavoriteSong ?: return
-        viewModelScope.launch {
-            manageRepository.removeFavorite(favoriteSong.song.id)
-            updateState { copy(showRemoveDialog = false, selectedFavoriteSong = null) }
-            sendEffect(FavoriteUiEffect.FavoriteDelete)
         }
     }
 }

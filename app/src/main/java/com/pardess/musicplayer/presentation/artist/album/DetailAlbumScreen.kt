@@ -37,8 +37,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.domain.model.Album
 import com.pardess.musicplayer.presentation.Status
 import com.pardess.musicplayer.presentation.base.BaseScreen
-import com.pardess.musicplayer.presentation.component.MusicImage
-import com.pardess.musicplayer.presentation.component.SongItem
+import com.pardess.musicplayer.presentation.common.component.MusicImage
+import com.pardess.musicplayer.presentation.common.component.SongItem
 import com.pardess.musicplayer.presentation.navigation.Screen
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.ui.theme.PointColor
@@ -85,7 +85,7 @@ private fun DetailAlbumScreen(
                 val albums =
                     (uiState.albumsState as? Status.Success<List<Album>>)?.data ?: emptyList()
 
-                val fullTime = album.songs.sumOf { it.duration.toMillis() }.toTime()
+                val fullTime = album.songs.sumOf { it.duration.toMillis() / 1000 }.toTime()
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -192,8 +192,10 @@ private fun AlbumHeader(album: Album, fullTime: String) {
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = album.year.toString())
-            Spacer(modifier = Modifier.width(8.dp))
+            if (album.year != 0){
+                Text(text = album.year.toString())
+                Spacer(modifier = Modifier.width(8.dp))
+            }
             Text(text = fullTime, fontSize = 14.sp)
         }
         Spacer(modifier = Modifier.height(16.dp))

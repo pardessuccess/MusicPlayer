@@ -48,14 +48,18 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavController
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.domain.model.Album
 import com.pardess.musicplayer.domain.model.Artist
 import com.pardess.musicplayer.domain.model.Song
+import com.pardess.musicplayer.presentation.Status
 import com.pardess.musicplayer.presentation.base.BaseScreen
-import com.pardess.musicplayer.presentation.component.MusicImage
-import com.pardess.musicplayer.presentation.component.SongItem
-import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxState
+import com.pardess.musicplayer.presentation.common.component.ErrorView
+import com.pardess.musicplayer.presentation.common.component.LoadingView
+import com.pardess.musicplayer.presentation.common.component.MusicImage
+import com.pardess.musicplayer.presentation.common.component.SongItem
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.PointColor
@@ -65,14 +69,14 @@ import com.pardess.musicplayer.ui.theme.TextColor
 @Composable
 fun SearchScreen(
     onNavigateToRoute: (String) -> Unit,
-    searchBox: SearchBoxState,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
     allSongs: List<Song>,
 ) {
     val viewModel = hiltViewModel<SearchViewModel>()
     if (allSongs.isNotEmpty()) {
-        viewModel.initSearch(searchBox.searchQuery, allSongs)
+        viewModel.setAllSongs(allSongs)
     }
+
     BaseScreen(
         viewModel = viewModel,
         onEffect = { effect ->
@@ -96,7 +100,6 @@ private fun SearchScreen(
     onPlaybackEvent: (PlaybackEvent) -> Unit,
 ) {
 
-    val searchResult = uiState.searchResult
     var searchText by remember { mutableStateOf("") }
     LaunchedEffect(
         uiState.searchQuery
@@ -109,7 +112,7 @@ private fun SearchScreen(
             .fillMaxSize()
             .background(BackgroundColor)
     ) {
-        if (searchResult.songs.isEmpty() && searchResult.artists.isEmpty() && searchResult.albums.isEmpty()) {
+        if (uiState.searchResult is Status.Success && uiState.searchResult.data.songs.isEmpty() && uiState.searchResult.data.artists.isEmpty() && uiState.searchResult.data.albums.isEmpty()) {
             Text(
                 text = "\"${uiState.searchQuery}\"에 대한 검색 결과가 없습니다.",
                 modifier = Modifier
@@ -120,45 +123,51 @@ private fun SearchScreen(
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
-        }
-        Column {
-            Spacer(modifier = Modifier.height(16.dp))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .padding(horizontal = 16.dp)
-                    .background(
-                        shape = RoundedCornerShape(20.dp),
-                        color = PointColor
-                    )
-                    .clip(shape = RoundedCornerShape(20.dp))
-                    .clickable {
+        } else if (uiState.searchResult is Status.Success) {
+            Column {
+                Spacer(modifier = Modifier.height(16.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .padding(horizontal = 16.dp)
+                        .background(
+                            shape = RoundedCornerShape(20.dp),
+                            color = PointColor
+                        )
+                        .clip(shape = RoundedCornerShape(20.dp))
+                        .clickable {
 
-                    },
-                verticalArrangement = Arrangement.Center
-            ) {
-                SearchInputSection(
-                    searchText = searchText,
-                    setSearchText = { searchText = it },
+                        },
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    SearchInputSection(
+                        searchText = searchText,
+                        setSearchText = { searchText = it },
+                        onEvent = onEvent,
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                SearchResults(
+                    searchResult = uiState.searchResult.data,
                     onEvent = onEvent,
+                    onPlaybackEvent = onPlaybackEvent
+                )
+                Spacer(
+                    modifier = Modifier.height(
+                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                    )
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            SearchResults(
-                searchResult = searchResult,
-                onEvent = onEvent,
-                onPlaybackEvent = onPlaybackEvent
-            )
-            Spacer(
-                modifier = Modifier.height(
-                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                )
+        } else if (uiState.searchResult is Status.Loading) {
+            LoadingView()
+        } else if (uiState.searchResult is Status.Error) {
+            ErrorView(
+                message = uiState.searchResult.message
             )
         }
     }
 }
-
 
 
 @Composable
@@ -257,7 +266,10 @@ fun SearchResults(
             }
         }
         if (searchResult.artists.isNotEmpty()) {
-            item { SectionTitle(title = "가수 (${searchResult.artists.size})") }
+            item {
+                Spacer(Modifier.height(16.dp))
+                SectionTitle(title = "가수 (${searchResult.artists.size})")
+            }
             items(searchResult.artists) { artist ->
                 ArtistItem(
                     artist = artist,
@@ -265,7 +277,10 @@ fun SearchResults(
             }
         }
         if (searchResult.albums.isNotEmpty()) {
-            item { SectionTitle(title = "앨범 (${searchResult.albums.size})") }
+            item {
+                Spacer(Modifier.height(16.dp))
+                SectionTitle(title = "앨범 (${searchResult.albums.size})")
+            }
             items(searchResult.albums) { album ->
                 AlbumItem(album = album, onClick = { onEvent(SearchUiEvent.SelectAlbum(album)) })
             }
@@ -350,3 +365,28 @@ fun AlbumItem(
     }
 }
 
+//@Composable
+//fun SearchScreen(
+//    onNavigateToRoute: (String) -> Unit,
+//    onPlaybackEvent: (PlaybackEvent) -> Unit,
+//    allSongs: List<Song>,
+//) {
+//    val viewModel = hiltViewModel<SearchViewModel>()
+//    if (allSongs.isNotEmpty()) {
+//        viewModel.initSearch("", allSongs)
+//    }
+//    BaseScreen(
+//        viewModel = viewModel,
+//        onEffect = { effect ->
+//            when (effect) {
+//                is SearchUiEffect.Navigate -> onNavigateToRoute(effect.route)
+//            }
+//        }
+//    ) { uiState, onEvent ->
+//        SearchScreen(
+//            uiState = uiState,
+//            onEvent = onEvent,
+//            onPlaybackEvent = onPlaybackEvent
+//        )
+//    }
+//}

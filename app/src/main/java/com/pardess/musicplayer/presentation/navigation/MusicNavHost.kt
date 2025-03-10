@@ -5,11 +5,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -26,6 +22,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -33,19 +30,15 @@ import androidx.navigation.compose.navigation
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.pardess.musicplayer.Constants
 import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.presentation.artist.navgraph.artistGraph
-import com.pardess.musicplayer.presentation.component.FullWidthButton
+import com.pardess.musicplayer.presentation.common.component.FullWidthButton
 import com.pardess.musicplayer.presentation.home.HomeScreen
 import com.pardess.musicplayer.presentation.home.HomeUiEffect
 import com.pardess.musicplayer.presentation.home.HomeUiEvent
 import com.pardess.musicplayer.presentation.home.HomeViewModel
 import com.pardess.musicplayer.presentation.home.MusicBottomNavigationBar
 import com.pardess.musicplayer.presentation.main.navgraph.mainGraph
-import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxEvent
-import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxState
-import com.pardess.musicplayer.presentation.main.searchbox.SearchBoxViewModel
 import com.pardess.musicplayer.presentation.playback.Playback
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.playback.PlaybackViewModel
@@ -53,6 +46,7 @@ import com.pardess.musicplayer.presentation.playlist.navgraph.playlistGraph
 import com.pardess.musicplayer.presentation.songs.navgraph.songsGraph
 import com.pardess.musicplayer.ui.theme.BackgroundColor
 import com.pardess.musicplayer.ui.theme.PointColor
+import com.pardess.musicplayer.utils.Constants
 
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -62,17 +56,11 @@ fun MusicNavHost(
 ) {
     MediaPermissionHandler {
         val playbackViewModel = hiltViewModel<PlaybackViewModel>()
-        val searchBoxViewModel = hiltViewModel<SearchBoxViewModel>()
         val homeViewModel = hiltViewModel<HomeViewModel>()
         val homeUiState = homeViewModel.uiState.collectAsStateWithLifecycle()
-
-        val currentRoute = homeUiState.value.currentRoute
-
-        val searchBoxState = searchBoxViewModel.uiState.collectAsStateWithLifecycle()
         val allSongsState = playbackViewModel.allSongs.collectAsStateWithLifecycle()
         val playbackUiState = playbackViewModel.uiState.collectAsStateWithLifecycle()
-        val windowBottomPadding =
-            WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        val currentRoute = homeUiState.value.currentRoute
 
         // 현재 백 스택에서 가장 최신의 `destination`을 가져옴 (null 방지)
         val navBackStackEntry by navController.navController.currentBackStackEntryAsState()
@@ -85,20 +73,19 @@ fun MusicNavHost(
         )
 
         val bottomBarHeight by animateDpAsState(
-            targetValue = if (playbackUiState.value.expand || !HomeScreen.entries.any { it.route == currentRoute } || searchBoxState.value.expand) windowBottomPadding else 100.dp + windowBottomPadding,
+            targetValue = if (playbackUiState.value.expand || !HomeScreen.entries.any { it.route == currentRoute } || homeUiState.value.searchBoxExpand) 0.dp else 120.dp,
             animationSpec = tween(400), label = "Playback Bar Height"
         )
 
-        BackHandler(enabled = playbackUiState.value.expand || searchBoxState.value.expand) {
-            if (searchBoxState.value.expand) {
-                searchBoxViewModel.onEvent(SearchBoxEvent.Shrink)
-                return@BackHandler
+        BackHandler(enabled = homeUiState.value.searchBoxExpand) {
+            if (homeUiState.value.searchBoxExpand) {
+                homeViewModel.onEvent(HomeUiEvent.SearchBoxShrink)
             }
         }
 
         val systemUiController = rememberSystemUiController()
         LaunchedEffect(bottomBarHeight) {
-            if (bottomBarHeight == windowBottomPadding) {
+            if (bottomBarHeight == 0.dp) {
                 systemUiController.setSystemBarsColor(
                     color = Color.White, // 원하는 색상
                 )
@@ -129,7 +116,7 @@ fun MusicNavHost(
                 MusicBottomNavigationBar(
                     onEvent = homeViewModel::onEvent,
                     uiState = homeUiState.value,
-                    modifier = Modifier.height(bottomBarHeight),
+                    bottomBarHeight = bottomBarHeight,
                 )
             }
         ) {
@@ -148,17 +135,12 @@ fun MusicNavHost(
                         startDestination = Navigation.Home.route,
                     ) {
                         navGraph(
-                            onNavigateToRoute = navController::navigateToRoute,
+                            saveState = navController::saveState,
+                            navigate = navController::navigate,
                             upPress = navController::upPress,
                             allSongsState = allSongsState,
                             onPlaybackEvent = playbackViewModel::onEvent,
-                            onSearchBoxEvent = { event ->
-                                searchBoxViewModel.onEvent(
-                                    event = event,
-                                    onNavigateToRoute = navController::navigateToRoute,
-                                )
-                            },
-                            searchBoxState = searchBoxState,
+                            onHomeUiEvent = homeViewModel::onEvent,
                         )
                     }
                 }
@@ -179,39 +161,39 @@ fun MusicNavHost(
 }
 
 fun NavGraphBuilder.navGraph(
-    onNavigateToRoute: (String) -> Unit,
+    saveState: (String, String) -> Unit,
+    navigate: (String, NavBackStackEntry) -> Unit,
     upPress: () -> Unit,
     allSongsState: State<List<Song>>,
-    searchBoxState: State<SearchBoxState>,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
-    onSearchBoxEvent: (SearchBoxEvent) -> Unit,
+    onHomeUiEvent: (HomeUiEvent) -> Unit,
 ) {
     navigation(
         route = Navigation.Home.route,
         startDestination = Navigation.Main.route,
     ) {
         mainGraph(
-            onNavigateToRoute = { route -> onNavigateToRoute(route) },
+            saveState = saveState,
+            navigate = navigate,
             upPress = upPress,
             allSongsState = allSongsState,
-            searchBoxState = searchBoxState,
+            onHomeUiEvent = onHomeUiEvent,
             onPlaybackEvent = onPlaybackEvent,
-            onSearchBoxEvent = onSearchBoxEvent,
         )
         playlistGraph(
-            onNavigateToRoute = { route -> onNavigateToRoute(route) },
+            navigate = navigate,
             upPress = upPress,
             allSongsState = allSongsState,
             onPlaybackEvent = onPlaybackEvent
         )
         artistGraph(
-            onNavigateToRoute = { route -> onNavigateToRoute(route) },
+            navigate = navigate,
             upPress = upPress,
             onPlaybackEvent = onPlaybackEvent,
             allSongsState = allSongsState,
         )
         songsGraph(
-            onNavigateToRoute = { route -> onNavigateToRoute(route) },
+            navigate = navigate,
             upPress = upPress,
             onPlaybackEvent = onPlaybackEvent,
             allSongsState = allSongsState,

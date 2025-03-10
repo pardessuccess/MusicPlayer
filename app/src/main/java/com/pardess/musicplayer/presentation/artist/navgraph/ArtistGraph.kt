@@ -4,6 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
@@ -22,7 +23,7 @@ import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 
 
 fun NavGraphBuilder.artistGraph(
-    onNavigateToRoute: (String) -> Unit,
+    navigate: (String, NavBackStackEntry) -> Unit,
     upPress: () -> Unit,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
     allSongsState: State<List<Song>>,
@@ -31,9 +32,9 @@ fun NavGraphBuilder.artistGraph(
         route = Navigation.Artist.route,
         startDestination = HomeScreen.Artist.route,
     ) {
-        composable(HomeScreen.Artist.route) {
+        composable(HomeScreen.Artist.route) { backStackEntry ->
             ArtistScreen(
-                onNavigateToRoute = onNavigateToRoute,
+                onNavigateToRoute = { navigate(it, backStackEntry) },
                 upPress = upPress,
                 allSongs = allSongsState.value,
             )
@@ -41,31 +42,31 @@ fun NavGraphBuilder.artistGraph(
         composable(
             route = Screen.DetailArtist.route + "/{artistId}",
             arguments =
-            listOf(
-                navArgument("artistId") {
-                    type = NavType.LongType
-                },
-            )
-        ) {
+                listOf(
+                    navArgument("artistId") {
+                        type = NavType.LongType
+                    },
+                )
+        ) { backStackEntry ->
             DetailArtistScreen(
-                onNavigateToRoute = onNavigateToRoute,
+                onNavigateToRoute = { navigate(it, backStackEntry) },
                 onPlaybackEvent = onPlaybackEvent,
             )
         }
         composable(
             route = Screen.DetailArtist.route + "/{artistId}/{albumId}",
             arguments =
-            listOf(
-                navArgument("artistId") {
-                    type = NavType.LongType
-                },
-                navArgument("albumId") {
-                    type = NavType.LongType
-                }
-            )
-        ) {
+                listOf(
+                    navArgument("artistId") {
+                        type = NavType.LongType
+                    },
+                    navArgument("albumId") {
+                        type = NavType.LongType
+                    }
+                )
+        ) { backStackEntry ->
             DetailAlbumScreen(
-                onNavigateToRoute = onNavigateToRoute,
+                onNavigateToRoute = { navigate(it, backStackEntry) },
                 onPlaybackEvent = onPlaybackEvent,
             )
         }

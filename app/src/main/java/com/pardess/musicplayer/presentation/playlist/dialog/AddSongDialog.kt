@@ -35,8 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.pardess.musicplayer.domain.model.Song
-import com.pardess.musicplayer.presentation.component.MusicImage
-import com.pardess.musicplayer.presentation.component.TwoBottomButton
+import com.pardess.musicplayer.presentation.common.component.MusicImage
+import com.pardess.musicplayer.presentation.common.component.TwoBottomButton
 import com.pardess.musicplayer.presentation.playlist.detail.DetailPlaylistUiEvent
 import com.pardess.musicplayer.presentation.toPlaylistSong
 import com.pardess.musicplayer.ui.theme.Gray300

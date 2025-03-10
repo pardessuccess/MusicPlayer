@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.data.entity.join.FavoriteSong
 import com.pardess.musicplayer.presentation.base.BaseScreen
-import com.pardess.musicplayer.presentation.component.FavoriteSongItem
+import com.pardess.musicplayer.presentation.common.component.FavoriteSongItem
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.toSong
 import com.pardess.musicplayer.ui.theme.PointColor

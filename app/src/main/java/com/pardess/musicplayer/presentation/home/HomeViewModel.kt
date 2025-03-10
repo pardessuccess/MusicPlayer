@@ -1,19 +1,10 @@
 package com.pardess.musicplayer.presentation.home
 
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.pardess.musicplayer.presentation.playlist.PlaylistUiEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.pardess.musicplayer.presentation.base.BaseUiEffect
 import com.pardess.musicplayer.presentation.base.BaseUiEvent
 import com.pardess.musicplayer.presentation.base.BaseUiState
@@ -36,8 +27,8 @@ sealed class HomeUiEvent : BaseUiEvent {
     object BottomBarShrink : HomeUiEvent()
     data class CurrentRoute(val route: String) : HomeUiEvent()
     data class NavigateBottomBar(val route: String) : HomeUiEvent()
-    object SearchSectionExpand : HomeUiEvent()
-    object SearchSectionShrink : HomeUiEvent()
+    object SearchBoxExpand : HomeUiEvent()
+    object SearchBoxShrink : HomeUiEvent()
     data class BottomBarSelect(val index: Int) : HomeUiEvent()
 }
 
@@ -64,11 +55,11 @@ class HomeViewModel @Inject constructor() :
                 updateState { copy(currentRoute = event.route) }
             }
 
-            HomeUiEvent.SearchSectionExpand -> {
+            HomeUiEvent.SearchBoxExpand -> {
                 updateState { copy(searchBoxExpand = true) }
             }
 
-            HomeUiEvent.SearchSectionShrink -> {
+            HomeUiEvent.SearchBoxShrink -> {
                 updateState { copy(searchBoxExpand = false) }
             }
 

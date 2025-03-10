@@ -29,7 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.pardess.musicplayer.R
 import com.pardess.musicplayer.domain.model.Song
 import com.pardess.musicplayer.presentation.base.BaseScreen
-import com.pardess.musicplayer.presentation.component.CheckSongItem
+import com.pardess.musicplayer.presentation.common.component.CheckSongItem
 import com.pardess.musicplayer.presentation.playback.PlaybackEvent
 import com.pardess.musicplayer.presentation.playlist.dialog.AddSongToPlaylistDialog
 import com.pardess.musicplayer.presentation.toSong
@@ -198,7 +198,6 @@ fun PlaylistActions(
                 .clickable {
                     if (uiState.deleteMode) {
                         onEvent(DetailPlaylistUiEvent.DeleteSelectedSongs)
-                        onEvent(DetailPlaylistUiEvent.ToggleDeleteMode)
                     } else onEvent(DetailPlaylistUiEvent.SetShowAddSongDialog(true))
                 }
                 .weight(1f)

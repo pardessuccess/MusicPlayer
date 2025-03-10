@@ -1,6 +1,7 @@
 package com.pardess.musicplayer.presentation.songs.navgraph
 
 import androidx.compose.runtime.State
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -13,7 +14,7 @@ import com.pardess.musicplayer.presentation.songs.SongsScreen
 
 
 fun NavGraphBuilder.songsGraph(
-    onNavigateToRoute: (String) -> Unit,
+    navigate: (String, NavBackStackEntry) -> Unit,
     upPress: () -> Unit,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
     allSongsState: State<List<Song>>,
@@ -22,10 +23,10 @@ fun NavGraphBuilder.songsGraph(
         route = Navigation.Songs.route,
         startDestination = HomeScreen.Songs.route,
     ) {
-        composable(HomeScreen.Songs.route) {
+        composable(HomeScreen.Songs.route) { backStackEntry ->
             BaseScreen {
                 SongsScreen(
-                    navigateToRoute = onNavigateToRoute,
+                    onNavigateToRoute = { navigate(it, backStackEntry) },
                     allSongs = allSongsState.value,
                     onPlaybackEvent = onPlaybackEvent
                 )

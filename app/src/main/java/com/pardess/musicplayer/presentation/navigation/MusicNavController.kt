@@ -3,20 +3,12 @@ package com.pardess.musicplayer.presentation.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination
 import androidx.navigation.NavGraph
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-
-object MainDestinations {
-    const val HOME_ROUTE = "home"
-    const val SNACK_DETAIL_ROUTE = "snack"
-    const val SNACK_ID_KEY = "snackId"
-    const val ORIGIN = "origin"
-}
 
 
 @Composable
@@ -27,9 +19,9 @@ fun rememberMusicNavController(
 }
 
 @Stable
-class MusicNavController (
+class MusicNavController(
     val navController: NavHostController
-){
+) {
     val currentRoute: String? = navController.currentDestination?.route
 
     fun navigateToRoute(route: String) {
@@ -50,10 +42,14 @@ class MusicNavController (
         }
     }
 
-    fun navigateToSnackDetail(snackId: Long, origin: String, from: NavBackStackEntry) {
+    fun saveState(key: String, value: String) {
+        navController.currentBackStackEntry?.arguments?.putString(key, value)
+    }
+
+    fun navigate(route: String, from: NavBackStackEntry) {
         // In order to discard duplicated navigation events, we check the Lifecycle
         if (from.lifecycleIsResumed()) {
-            navController.navigate("${MainDestinations.SNACK_DETAIL_ROUTE}/$snackId?origin=$origin")
+            navController.navigate(route)
         }
     }
 
