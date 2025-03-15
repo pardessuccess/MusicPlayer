@@ -76,6 +76,7 @@ fun NavigationBarItem(
             painter = painterResource(id = icon),
             contentDescription = "navigation icon $icon",
         )
+
         if (bottomBarHeight == 120.dp) {
             AutoSizeText(
                 text = title,

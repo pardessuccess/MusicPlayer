@@ -66,10 +66,12 @@ private fun HistoryScreen(
     onEvent: (HistoryUiEvent) -> Unit,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
         Header(title = "최근 기록")
         HistorySongList(
-            modifier = Modifier.weight(1f),
             historySongs = uiState.historySongs,
             onPlaybackEvent = onPlaybackEvent
         )

@@ -10,9 +10,19 @@ import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.pardess.database.dao.FavoriteDao
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-internal class CustomMediaSessionCallback : MediaSession.Callback {
+class CustomMediaSessionCallback @Inject constructor(
+    private val favoriteDao: FavoriteDao
+) : MediaSession.Callback {
 
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     @OptIn(UnstableApi::class)
     override fun onConnect(
@@ -28,22 +38,21 @@ internal class CustomMediaSessionCallback : MediaSession.Callback {
                 sessionCommandBuilder.add(commandButton.sessionCommand)
             }
 
-            val repeatButton = NotificationCommandButtons.REPEAT.let {
+            val favoriteButton = NotificationCommandButtons.FAVORITE.let {
                 CommandButton.Builder()
                     .setDisplayName(it.displayName)
-                    .setIconResId(it.iconResId(session.player.repeatMode))
+                    .setIconResId(it.iconResId)
                     .setSessionCommand(it.sessionCommand)
                     .build()
             }
 
             MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                 .setAvailableSessionCommands(sessionCommandBuilder.build())
-                .setCustomLayout(listOf(repeatButton))
+                .setCustomLayout(listOf(favoriteButton))
                 .build()
         } else {
             MediaSession.ConnectionResult.AcceptedResultBuilder(session).build()
         }
-
 
     @OptIn(UnstableApi::class)
     override fun onCustomCommand(
@@ -56,28 +65,19 @@ internal class CustomMediaSessionCallback : MediaSession.Callback {
         println("onCustomCommand: ${customCommand.customAction}")
 
         when (customCommand.customAction) {
-            NotificationCommandButtons.REPEAT.customAction -> {
-                var currentRepeatMode = session.player.repeatMode
-                println("@@@@ repeatMode: $currentRepeatMode")
-                session.player.run {
-                    repeatMode = when (currentRepeatMode) {
-                        Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ONE
-                        Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_ALL
-                        Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_OFF
-                        else -> Player.REPEAT_MODE_OFF
-                    }
+            NotificationCommandButtons.FAVORITE.customAction -> {
+                scope.launch {
+                    session.player.currentMediaItem?.mediaMetadata?.extras?.getLong("id")
+                        ?.let { favoriteDao.increaseOrInsertFavorite(it) }
                 }
-            }
-
-            NotificationCommandButtons.SHUFFLE.customAction -> {
-                println("@@@@ SHUFFLE: ${session.player.shuffleModeEnabled}")
-                session.player.run {
-                    shuffleModeEnabled = !shuffleModeEnabled
-                }
-//                mediaNotificationManager.updateNotification()
             }
         }
-
         return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
     }
+
+    override fun onDisconnected(session: MediaSession, controller: MediaSession.ControllerInfo) {
+        super.onDisconnected(session, controller)
+        scope.cancel()
+    }
+
 }

@@ -268,12 +268,6 @@ fun PlaylistActions(
     }
 }
 
-@Composable
-fun Header() {
-
-}
-
-
 // 드래그 제스처를 감지할 Modifier
 fun Modifier.dragContainer(
     dragAndDropListState: DragAndDropListState,

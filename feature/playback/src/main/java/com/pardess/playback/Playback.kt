@@ -145,7 +145,8 @@ fun Playback(
                     )
                 }
                 .background(backgroundColor)
-                .height(barHeight),
+                .height(barHeight)
+                ,
             contentAlignment = Alignment.BottomCenter
         ) {
             if (currentSong != null) {

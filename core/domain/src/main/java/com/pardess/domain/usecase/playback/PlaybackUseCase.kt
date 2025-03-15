@@ -75,9 +75,6 @@ class PlaybackUseCaseImpl @Inject constructor(
         var updatedSongId = currentSongId
         var updatedHistory = historyUpdated
         var updatedPlayCount = playCountUpdated
-
-        println(currentUiState.repeatMode.toString() + " @@@ " + newPlayerState.repeatMode)
-
         val currentSong = newPlayerState.currentSong
         if (currentSong != null) {
             // 새 곡이 시작되면 update 플래그 리셋

@@ -90,7 +90,6 @@ class PlaybackViewModel @Inject constructor(
         when (event) {
             is PlaybackEvent.PlaySong -> {
                 viewModelScope.launch {
-                    println("@@@@@ ${event.index}")
                     useCase.onPlay(event.index, event.playlist)
                 }
             }

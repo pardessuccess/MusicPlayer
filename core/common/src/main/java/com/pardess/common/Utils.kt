@@ -89,7 +89,10 @@ object Utils {
 
         val minutes = (this / 60000).toInt()
         val seconds = (this % 60000 / 1000).toInt()
-
+        if (this >= 3600000) {
+            val hours = (this / 3600000).toInt()
+            stringBuffer.append(String.format("%02d", hours) + ":")
+        }
         stringBuffer
             .append(String.format("%02d", minutes))
             .append(":")

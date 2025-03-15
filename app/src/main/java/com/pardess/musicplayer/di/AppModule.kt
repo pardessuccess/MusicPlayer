@@ -1,7 +1,7 @@
 package com.pardess.musicplayer.di
 
 import com.pardess.media_service.PendingIntentProvider
-import com.pardess.musicplayer.PendingIntentProviderImpl
+import com.pardess.musicplayer.service.PendingIntentProviderImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -11,7 +11,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-
     @Provides
     @Singleton
     fun providePendingIntentProvider(

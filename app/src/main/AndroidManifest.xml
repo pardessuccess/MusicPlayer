@@ -43,9 +43,10 @@
         </activity>
 
         <service
-            android:name=".data.service.MediaPlayerService"
+            android:name="com.pardess.media_service.MediaPlayerService"
             android:exported="true"
-            android:foregroundServiceType="mediaPlayback">
+            android:foregroundServiceType="mediaPlayback"
+            android:stopWithTask="true">
             <intent-filter>
                 <action android:name="androidx.media3.session.MediaSessionService" />
             </intent-filter>

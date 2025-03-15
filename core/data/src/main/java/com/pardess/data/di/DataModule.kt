@@ -8,14 +8,12 @@ import com.pardess.data.repository.MusicRepositoryImpl
 import com.pardess.data.repository.PlaylistRepositoryImpl
 import com.pardess.data.repository.PrefRepositoryImpl
 import com.pardess.datastore.UserPreferences
-import com.pardess.datastore.UserPreferencesImpl
 import com.pardess.domain.repository.ManageRepository
 import com.pardess.domain.repository.MediaPlayerListenerRepository
 import com.pardess.domain.repository.MediaPlayerRepository
 import com.pardess.domain.repository.MusicRepository
 import com.pardess.domain.repository.PlaylistRepository
 import com.pardess.domain.repository.PrefRepository
-import com.pardess.media_service.MediaControllerManager
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -43,6 +41,11 @@ abstract class DataModule {
         mediaPlayerListenerRepository: MediaPlayerListenerRepositoryImpl
     ): MediaPlayerListenerRepository
 
+    @Binds
+    internal abstract fun bindsMediaPlayerRepository(
+        mediaPlayerRepository: MediaPlayerRepositoryImpl
+    ): MediaPlayerRepository
+
 }
 
 @Module
@@ -64,14 +67,4 @@ object MediaDiModule {
     ): MusicRepository {
         return MusicRepositoryImpl(context)
     }
-
-    @Provides
-    @Singleton
-    fun provideMediaPlayerRepository(
-        mediaControllerManager: MediaControllerManager,
-        mediaPlayerListenerRepository: MediaPlayerListenerRepository
-    ): MediaPlayerRepository {
-        return MediaPlayerRepositoryImpl(mediaControllerManager, mediaPlayerListenerRepository)
-    }
-
 }

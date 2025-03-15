@@ -11,6 +11,10 @@ dependencies {
 
     implementation(project(":core:model"))
     implementation(project(":core:common"))
+    implementation(project(":core:media-service"))
+
+    implementation(libs.media3.session)
+    implementation(libs.media3.exoplayer)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

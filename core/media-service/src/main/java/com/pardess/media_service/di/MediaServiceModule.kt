@@ -11,6 +11,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
+import com.pardess.database.dao.FavoriteDao
 import com.pardess.media_service.ConnectedMediaController
 import com.pardess.media_service.CustomMediaSessionCallback
 import com.pardess.media_service.MediaControllerManager
@@ -65,14 +66,23 @@ object MediaServiceModule {
             .build()
     }
 
+    @Provides
+    @Singleton
+    fun providesCustomMediaSessionCallback(
+        favoriteDao: FavoriteDao
+    ): CustomMediaSessionCallback {
+        return CustomMediaSessionCallback(favoriteDao)
+    }
+
     @Singleton
     @Provides
     fun providesMediaSession(
         @ApplicationContext context: Context,
-        exoPlayer: ExoPlayer
+        exoPlayer: ExoPlayer,
+        customMediaSessionCallback: CustomMediaSessionCallback
     ): MediaSession {
         return MediaSession.Builder(context, exoPlayer)
-            .setCallback(CustomMediaSessionCallback())
+            .setCallback(customMediaSessionCallback)
             .build()
     }
 
