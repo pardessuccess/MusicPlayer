@@ -2,10 +2,7 @@ package com.pardess.media_service
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -63,8 +60,7 @@ class MediaNotificationManager @Inject constructor(
             setOngoing(false)
 
             val orderedButtons = listOf(
-                NotificationCommandButtons.SHUFFLE,
-                NotificationCommandButtons.REPEAT
+                NotificationCommandButtons.FAVORITE
             )
             orderedButtons.forEach { commandButton ->
                 addAction(
@@ -72,13 +68,7 @@ class MediaNotificationManager @Inject constructor(
                         mediaSession,
                         IconCompat.createWithResource(
                             context,
-                            when (commandButton) {
-                                NotificationCommandButtons.REPEAT -> commandButton.iconResId(
-                                    mediaSession.player.repeatMode
-                                )
-
-                                NotificationCommandButtons.SHUFFLE -> commandButton.iconResId(if (mediaSession.player.shuffleModeEnabled) 0 else 1)
-                            }
+                            commandButton.iconResId
                         ),
                         commandButton.displayName,
                         commandButton.customAction,
@@ -88,24 +78,10 @@ class MediaNotificationManager @Inject constructor(
             }
         }
         return MediaNotification(
-            NOTIFICATION_CHANNEL_ID.toInt(),
+            NOTIFICATION_CHANNEL_ID,
             notificationBuilder.build()
         )
     }
-
-//
-//    private fun createNotifyPendingIntent(): PendingIntent =
-//        PendingIntent.getActivity(
-//            context,
-//            0,
-//            Intent().apply {
-//                action = Intent.ACTION_VIEW
-//                component = ComponentName(context, MainActivity::class.java)
-//                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-//            },
-//            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-//        )
-
     private fun ensureNotificationChannel(notificationManager: NotificationManager) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
             notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL_ID.toString()) != null

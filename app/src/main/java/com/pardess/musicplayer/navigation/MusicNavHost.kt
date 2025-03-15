@@ -5,7 +5,10 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -24,18 +27,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
-import androidx.navigation.navArgument
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.pardess.artist.ArtistScreen
-import com.pardess.artist.album.DetailAlbumScreen
-import com.pardess.artist.detail.DetailArtistScreen
+import com.pardess.artist.navgraph.artistGraph
 import com.pardess.common.Constants
 import com.pardess.designsystem.BackgroundColor
 import com.pardess.designsystem.PointColor
@@ -43,7 +41,6 @@ import com.pardess.home.navgraph.mainGraph
 import com.pardess.model.Song
 import com.pardess.navigation.HomeScreen
 import com.pardess.navigation.Navigation
-import com.pardess.navigation.Screen
 import com.pardess.playback.Playback
 import com.pardess.playback.PlaybackEvent
 import com.pardess.playback.PlaybackViewModel
@@ -53,7 +50,6 @@ import com.pardess.root.MusicBottomNavigationBar
 import com.pardess.root.RootUiEffect
 import com.pardess.root.RootUiEvent
 import com.pardess.songs.navgraph.songsGraph
-import com.pardess.artist.navgraph.artistGraph
 import com.pardess.ui.FullWidthButton
 
 
@@ -79,9 +75,10 @@ fun MusicNavHost(
                 navBackStackEntry?.destination?.route ?: HomeScreen.Main.route
             )
         )
+        val navigationBarHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
         val bottomBarHeight by animateDpAsState(
-            targetValue = if (playbackUiState.value.expand || !HomeScreen.entries.any { it.route == currentRoute } || homeUiState.value.searchBoxExpand) 0.dp else 120.dp,
+            targetValue = if (playbackUiState.value.expand || !HomeScreen.entries.any { it.route == currentRoute } || homeUiState.value.searchBoxExpand) navigationBarHeight else 120.dp,
             animationSpec = tween(400), label = "Playback Bar Height"
         )
 

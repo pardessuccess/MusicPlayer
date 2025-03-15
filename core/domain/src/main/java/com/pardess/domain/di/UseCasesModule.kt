@@ -50,4 +50,5 @@ abstract class UseCasesModule {
     abstract fun bindsPlaylistUseCase(
         playlistUseCaseImpl: PlaylistUseCaseImpl
     ): PlaylistUseCase
+
 }

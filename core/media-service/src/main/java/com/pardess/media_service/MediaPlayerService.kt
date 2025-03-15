@@ -13,7 +13,6 @@ import com.google.common.collect.ImmutableList
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-
 @UnstableApi
 @AndroidEntryPoint
 class MediaPlayerService : MediaSessionService() {
@@ -75,8 +74,6 @@ class MediaPlayerService : MediaSessionService() {
             player.mediaItemCount == 0 ||
             player.playbackState == Player.STATE_ENDED
         ) {
-            // Stop the service if not playing, continue playing in the background
-            // otherwise.
             stopSelf()
         }
     }

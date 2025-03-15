@@ -1,10 +1,11 @@
-package com.pardess.musicplayer
+package com.pardess.musicplayer.service
 
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import com.pardess.media_service.PendingIntentProvider
+import com.pardess.musicplayer.MainActivity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 

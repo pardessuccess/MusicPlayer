@@ -9,8 +9,11 @@ android {
 
 dependencies {
 
+    implementation(project(":core:database"))
+
     implementation(libs.media3.session)
     implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
