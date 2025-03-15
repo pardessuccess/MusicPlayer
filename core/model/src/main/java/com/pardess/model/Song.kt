@@ -19,7 +19,6 @@ data class Song(
     val favorite: Boolean = false
 ){
     companion object {
-
         @JvmStatic
         val emptySong = Song(
             id = -1,

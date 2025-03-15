@@ -70,7 +70,7 @@ fun Song.toEntity(): SongEntity {
         id = this.id,
         title = this.title,
         year = this.year,
-        duration = this.duration.toMillis(),
+        duration = this.duration.toMillis() / 1000,
         data = this.data,
         albumId = this.albumId,
         albumName = this.albumName,
@@ -159,11 +159,13 @@ fun PlaylistSong.toEntity(): PlaylistSongEntity {
 fun PlaylistSongsDto.toDomain(): PlaylistSongs {
     return PlaylistSongs(
         playlist = this.playlist.toDomain(),
-        songs = this.songs.map { PlaylistSong(
-            songPrimaryKey = it.songPrimaryKey,
-            playlistCreatorId = it.playlistCreatorId,
-            song = it.song.toDomain()
-        ) }
+        songs = this.songs.map {
+            PlaylistSong(
+                songPrimaryKey = it.songPrimaryKey,
+                playlistCreatorId = it.playlistCreatorId,
+                song = it.song.toDomain()
+            )
+        }
     )
 }
 
