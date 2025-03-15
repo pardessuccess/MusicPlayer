@@ -9,6 +9,7 @@ import com.pardess.domain.Utils.normalizeText
 import com.pardess.model.Album
 import com.pardess.model.Artist
 import com.pardess.model.SearchHistory
+import com.pardess.model.SearchType
 import com.pardess.model.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -17,7 +18,7 @@ import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
 interface SearchUseCase {
-    suspend fun saveSearchHistory(searchHistory: SearchHistory)
+    suspend fun saveSearchHistory(image: String?, searchType: SearchType, text: String)
     fun setAllSongs(songs: List<Song>): List<Song>
     fun searchSongs(query: String, allSongs: List<Song>): Flow<Result<List<Song>>>
     fun searchArtists(query: String, allSongs: List<Song>): Flow<Result<List<Artist>>>
@@ -27,8 +28,12 @@ interface SearchUseCase {
 class SearchUseCaseImpl @Inject constructor(
     private val homeUseCase: HomeUseCase
 ) : SearchUseCase {
-    override suspend fun saveSearchHistory(searchHistory: SearchHistory) {
-        homeUseCase.saveSearchHistory(searchHistory)
+    override suspend fun saveSearchHistory(image: String?, searchType: SearchType, text: String) {
+        homeUseCase.saveSearchHistory(
+            type = searchType,
+            image = image,
+            text = text,
+        )
     }
 
     override fun setAllSongs(songs: List<Song>): List<Song> {

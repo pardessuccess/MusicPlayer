@@ -1,5 +1,6 @@
 package com.pardess.home.component
 
+import android.Manifest
 import android.content.Intent
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -52,6 +53,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.pardess.common.Utils.setSpeechRecognizer
 import com.pardess.designsystem.BackgroundColor
 import com.pardess.designsystem.PointColor
@@ -64,6 +68,7 @@ import com.pardess.model.enums.SpeechStatus
 import com.pardess.root.RootUiEvent
 import com.pardess.ui.AutoSizeText
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun SearchBoxSection(
     uiState: MainUiState,
@@ -85,6 +90,10 @@ fun SearchBoxSection(
         )
         putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ko-KR")
     }
+
+    var hasRecordPermission by remember { mutableStateOf(false) }
+    val recordPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
+    hasRecordPermission = recordPermissionState.status.isGranted
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
@@ -200,7 +209,11 @@ fun SearchBoxSection(
                         onEvent(MainUiEvent.SearchBoxShrink)
                         onHomeUiEvent(RootUiEvent.SearchBoxShrink)
                     } else {
-                        speechRecognizer.startListening(intent)
+                        if (hasRecordPermission) {
+                            speechRecognizer.startListening(intent)
+                        } else {
+                            recordPermissionState.launchPermissionRequest()
+                        }
                         onEvent(MainUiEvent.SearchBoxExpand)
                         onHomeUiEvent(RootUiEvent.SearchBoxExpand)
                     }

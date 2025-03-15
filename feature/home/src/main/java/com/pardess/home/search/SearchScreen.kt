@@ -96,8 +96,8 @@ private fun SearchScreen(
     onEvent: (SearchUiEvent) -> Unit,
     onPlaybackEvent: (PlaybackEvent) -> Unit,
 ) {
-
     var searchText by remember { mutableStateOf("") }
+
     LaunchedEffect(
         uiState.searchQuery
     ) {

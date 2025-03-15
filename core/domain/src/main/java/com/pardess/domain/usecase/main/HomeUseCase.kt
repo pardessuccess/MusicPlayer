@@ -4,6 +4,7 @@ import com.pardess.domain.repository.ManageRepository
 import com.pardess.model.Album
 import com.pardess.model.Artist
 import com.pardess.model.SearchHistory
+import com.pardess.model.SearchType
 import com.pardess.model.join.FavoriteSong
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -16,7 +17,7 @@ interface HomeUseCase {
     fun getPopularAlbums(): Flow<List<Album>>
     fun getSearchHistory(): Flow<List<SearchHistory>>
     suspend fun deleteSearchHistory(searchHistoryId: Long)
-    suspend fun saveSearchHistory(searchHistory: SearchHistory)
+    suspend fun saveSearchHistory(image: String?, text: String, type: SearchType)
 
 }
 
@@ -87,7 +88,15 @@ class HomeUseCaseImpl @Inject constructor(
         repository.deleteSearchHistory(searchHistoryId)
     }
 
-    override suspend fun saveSearchHistory(searchHistory: SearchHistory) {
-        repository.saveSearchHistory(searchHistory)
+    override suspend fun saveSearchHistory(image: String?, text: String, type: SearchType) {
+        repository.saveSearchHistory(
+            SearchHistory(
+                id = 0,
+                image = image,
+                text = text,
+                type = type,
+                timestamp = System.currentTimeMillis()
+            )
+        )
     }
 }

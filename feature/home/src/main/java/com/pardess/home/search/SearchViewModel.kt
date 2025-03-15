@@ -78,7 +78,7 @@ class SearchViewModel @Inject constructor(
     override fun onEvent(event: SearchUiEvent) {
         when (event) {
             is SearchUiEvent.Search -> {
-                updateState { copy(searchQuery = event.query) }
+//                updateState { copy(searchQuery = event.query) }
                 search(event.query)
                 if (event.query.isNotEmpty()) {
                     saveSearchHistory(null, event.query, SearchType.TEXT)
@@ -114,13 +114,9 @@ class SearchViewModel @Inject constructor(
     private fun saveSearchHistory(image: String?, text: String, type: SearchType) {
         viewModelScope.launch {
             useCase.saveSearchHistory(
-                SearchHistory(
-                    id = 0,
-                    image = image,
-                    text = text,
-                    type = type,
-                    timestamp = System.currentTimeMillis()
-                )
+                image = image,
+                searchType = type,
+                text = text,
             )
         }
     }

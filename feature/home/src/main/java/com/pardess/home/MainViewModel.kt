@@ -9,6 +9,7 @@ import com.pardess.domain.usecase.main.HomeUseCase
 import com.pardess.model.Album
 import com.pardess.model.Artist
 import com.pardess.model.SearchHistory
+import com.pardess.model.SearchType
 import com.pardess.model.Song
 import com.pardess.model.join.FavoriteSong
 import com.pardess.navigation.Screen
@@ -82,6 +83,11 @@ class MainViewModel @Inject constructor(
 
             is MainUiEvent.Search -> {
                 viewModelScope.launch {
+                    useCase.saveSearchHistory(
+                        image = null,
+                        text = event.query,
+                        type = SearchType.TEXT
+                    )
                     sendEffect(MainUiEffect.Navigate(Screen.Search.route))
                     sendEffect(MainUiEffect.Search(event.query))
                 }
