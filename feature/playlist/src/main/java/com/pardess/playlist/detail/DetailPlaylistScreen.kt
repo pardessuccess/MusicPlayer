@@ -44,7 +44,7 @@ fun PlaylistDetailScreen(
 ) {
     val viewModel = hiltViewModel<DetailPlaylistViewModel>()
 
-    BaseScreen (
+    BaseScreen(
         viewModel = viewModel,
         onEffect = {
         }
@@ -81,7 +81,6 @@ private fun PlaylistDetailScreen(
                 onEvent,
                 onPlaybackEvent
             )
-            PlaylistActions(uiState, onEvent)
         }
         PlaylistDialogs(uiState, onEvent, allSongs)
     }
@@ -138,7 +137,7 @@ fun PlaylistSongList(
                 key = { song -> song.songPrimaryKey }
             ) { playlistSong ->
                 val checked = uiState.selectedSongs.contains(playlistSong)
-                CheckSongItem (
+                CheckSongItem(
                     checked = checked,
                     onClick = {
                         if (uiState.deleteMode) {
@@ -160,6 +159,7 @@ fun PlaylistSongList(
                     playlistSong = playlistSong
                 )
             }
+            item { PlaylistActions(uiState, onEvent) }
         }
     }
 }

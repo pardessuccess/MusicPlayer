@@ -47,7 +47,7 @@ fun FavoriteScreen(
         onEffect = { effect ->
             when (effect) {
                 is FavoriteUiEffect.FavoriteDelete -> {
-                    Toast.makeText(context, "즐겨찾기가 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "좋아요가 삭제되었습니다.", Toast.LENGTH_SHORT).show()
                 }
             }
         }

@@ -71,37 +71,14 @@ dependencies {
     implementation(project(":feature:root"))
     implementation(project(":feature:songs"))
 
-    implementation(libs.lazycolumnscrollbar)
-
-    implementation(libs.media3.ui)
-    implementation(libs.media3.session)
-    implementation(libs.media3.exoplayer)
-    implementation(libs.media3.exoplayer.hls)
-    implementation(libs.media3.exoplayer.dash)
-
-    implementation(libs.datastore)
-
-    implementation(libs.room)
-    implementation(libs.room.runtime)
-    implementation(libs.room.compiler)
-
     implementation(libs.hilt.android)
     implementation(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
-    implementation(libs.kotlinx.serialization.json)
-
-    implementation(libs.gson)
-
-    implementation(libs.coil.compose)
-
     implementation(libs.accompanist.permissions)
     implementation(libs.accompanist.systemuicontroller)
 
-    ksp(libs.room.compiler)
     ksp(libs.hilt.compiler)
-
-    annotationProcessor(libs.room.compiler)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
