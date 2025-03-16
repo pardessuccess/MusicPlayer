@@ -93,7 +93,7 @@ fun Playback(
 
     val currentSong = playbackUiState.playerState.currentSong
     val currentTime = playbackUiState.playerState.currentPosition.toMillis()
-    val totalTime = currentSong?.duration?.toMillis()
+    val totalTime = currentSong?.duration?.toMillis()?.div(1000L)
     val shuffleMode = playbackUiState.playerState.shuffle
     val repeatMode = playbackUiState.playerState.repeatMode
     val isPlaying = playbackUiState.playerState.isPlaying
@@ -145,8 +145,7 @@ fun Playback(
                     )
                 }
                 .background(backgroundColor)
-                .height(barHeight)
-                ,
+                .height(barHeight),
             contentAlignment = Alignment.BottomCenter
         ) {
             if (currentSong != null) {

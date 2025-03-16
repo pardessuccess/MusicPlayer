@@ -31,12 +31,6 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                 configureKotlinAndroid(this)
                 defaultConfig.targetSdk = 35
                 defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-                testOptions.animationsDisabled = true
-                // The resource prefix is derived from the module name,
-                // so resources inside ":core:module1" must be prefixed with "core_module1_"
-                resourcePrefix =
-                    path.split("""\W""".toRegex()).drop(1).distinct().joinToString(separator = "_")
-                        .lowercase() + "_"
             }
         }
     }

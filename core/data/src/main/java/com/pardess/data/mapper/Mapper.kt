@@ -32,7 +32,7 @@ fun MediaItem.toSong(): Song {
         title = mediaMetadata.title?.toString() ?: "",
         trackNumber = extras?.getInt("trackNumber") ?: 0,
         year = extras?.getInt("year") ?: 0,
-        duration = Duration.ofMillis((mediaMetadata.durationMs ?: 10000L) / 1000),
+        duration = Duration.ofMillis((mediaMetadata.durationMs ?: 10000L)),
         data = localConfiguration?.uri?.toString() ?: "",
         dateModified = extras?.getLong("dateModified") ?: 0L,
         albumId = extras?.getLong("albumId") ?: 0L,
@@ -70,7 +70,7 @@ fun Song.toEntity(): SongEntity {
         id = this.id,
         title = this.title,
         year = this.year,
-        duration = this.duration.toMillis() / 1000,
+        duration = this.duration.toMillis(),
         data = this.data,
         albumId = this.albumId,
         albumName = this.albumName,
@@ -85,7 +85,7 @@ fun SongEntity.toDomain(): Song {
         title = this.title,
         trackNumber = -1, // SongEntity에는 없으므로 기본값 설정
         year = this.year,
-        duration = Duration.ofSeconds(this.duration),
+        duration = Duration.ofMillis(this.duration),
         data = this.data,
         dateModified = System.currentTimeMillis(), // 수정 시간이 없으므로 현재 시간
         albumId = this.albumId,
@@ -174,26 +174,5 @@ fun FavoriteSongDto.toDomain(): FavoriteSong {
     return FavoriteSong(
         song = this.song.toDomain(),
         favoriteCount = this.favoriteCount
-    )
-}
-
-fun FavoriteSong.toEntity(): FavoriteSongDto {
-    return FavoriteSongDto(
-        song = this.song.toEntity(),
-        favoriteCount = this.favoriteCount
-    )
-}
-
-fun HistorySong.toEntity(): HistorySongDto {
-    return HistorySongDto(
-        song = this.song.toEntity(),
-        lastPlayed = this.lastPlayed
-    )
-}
-
-fun PlayCountSong.toEntity(): PlayCountSongDto {
-    return PlayCountSongDto(
-        song = this.song.toEntity(),
-        playCount = this.playCount
     )
 }
