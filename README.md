@@ -1,54 +1,40 @@
 This project is a music streaming app designed for elderly users, featuring an intuitive user interface and voice recognition functionality. It enables users who are not familiar with smartphones to easily search for and listen to music.
 
-Key Tech Stack
-Multi-Module Architecture
-app module: Main application module for building and running the app
+## Key Tech Stack
+### Multi-Module Architecture
+- **app module**: Main application module for building and running the app
+- **core module**: Houses common utilities and resources shared across the app
+- **build-logic module**: Centralized Gradle configuration management for consistency
+- **feature modules**: Isolated modules for individual features
 
-core module: Houses common utilities and resources shared across the app
+### Dependency Injection & Architecture
+- **MVI (Model-View-Intent)**: Ensures unidirectional data flow and clean state management
+- **StateFlow & SharedFlow**: Handles UI state and one-time events asynchronously
+- **Clean Architecture**: Separation of concerns across domain, data, and presentation layers for better readability and testability
+- **Hilt (Dagger Hilt)**: Dependency injection to reduce coupling and enable modular design
 
-build-logic module: Centralized Gradle configuration management for consistency
+### Music Playback & Media Integration
+- **ExoPlayer**: Optimized audio and media playback
+- **Foreground Service**: Keeps music playing even after the app is closed
+- **MediaSession**: Enables media control from the system UI and notifications
 
-feature modules: Isolated modules for individual features
+### Asynchronous Data Handling with Kotlin Coroutines
+- **Flow**: Observes real-time changes in Room database to update UI
+- **StateFlow**: Manages and exposes UI state in ViewModel
+- **Channel**: Used for handling one-time UI events (e.g., playback completion)
 
-Dependency Injection & Architecture
-MVI (Model-View-Intent): Ensures unidirectional data flow and clean state management
+### Voice Recognition
+- **SpeechRecognizer API**: Enables voice-based music search and playlist creation
+- **RecognizerIntent**: Handles voice command input via intents
 
-StateFlow & SharedFlow: Handles UI state and one-time events asynchronously
-
-Clean Architecture: Separation of concerns across domain, data, and presentation layers for better readability and testability
-
-Hilt (Dagger Hilt): Dependency injection to reduce coupling and enable modular design
-
-Music Playback & Media Integration
-ExoPlayer: Optimized audio and media playback
-
-Foreground Service: Keeps music playing even after the app is closed
-
-MediaSession: Enables media control from the system UI and notifications
-
-Asynchronous Data Handling with Kotlin Coroutines
-Flow: Observes real-time changes in Room database to update UI
-
-StateFlow: Manages and exposes UI state in ViewModel
-
-Channel: Used for handling one-time UI events (e.g., playback completion)
-
-Voice Recognition
-SpeechRecognizer API: Enables voice-based music search and playlist creation
-
-RecognizerIntent: Handles voice command input via intents
-
-UI & User Experience
-Jetpack Compose: Declarative UI framework for cleaner and more maintainable code
-
-AutoResizeText: Provides dynamically scalable text for better readability
-
-LazyColumnScrollbar (library): Offers an intuitive, scrollable music list interface
-
-Local Data Management
-Room Database: Stores and manages metadata of local music files
-
-DataStore: Persists simple app settings efficiently
+### UI & User Experience
+- **Jetpack Compose**: Declarative UI framework for cleaner and more maintainable code
+- **AutoResizeText**: Provides dynamically scalable text for better readability
+- **LazyColumnScrollbar (library)**: Offers an intuitive, scrollable music list interface
+  
+### Local Data Management
+- **Room Database**: Stores and manages metadata of local music files
+- **DataStore**: Persists simple app settings efficiently
 
 ---
 
