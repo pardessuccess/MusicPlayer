@@ -1,3 +1,57 @@
+This project is a music streaming app designed for elderly users, featuring an intuitive user interface and voice recognition functionality. It enables users who are not familiar with smartphones to easily search for and listen to music.
+
+Key Tech Stack
+Multi-Module Architecture
+app module: Main application module for building and running the app
+
+core module: Houses common utilities and resources shared across the app
+
+build-logic module: Centralized Gradle configuration management for consistency
+
+feature modules: Isolated modules for individual features
+
+Dependency Injection & Architecture
+MVI (Model-View-Intent): Ensures unidirectional data flow and clean state management
+
+StateFlow & SharedFlow: Handles UI state and one-time events asynchronously
+
+Clean Architecture: Separation of concerns across domain, data, and presentation layers for better readability and testability
+
+Hilt (Dagger Hilt): Dependency injection to reduce coupling and enable modular design
+
+Music Playback & Media Integration
+ExoPlayer: Optimized audio and media playback
+
+Foreground Service: Keeps music playing even after the app is closed
+
+MediaSession: Enables media control from the system UI and notifications
+
+Asynchronous Data Handling with Kotlin Coroutines
+Flow: Observes real-time changes in Room database to update UI
+
+StateFlow: Manages and exposes UI state in ViewModel
+
+Channel: Used for handling one-time UI events (e.g., playback completion)
+
+Voice Recognition
+SpeechRecognizer API: Enables voice-based music search and playlist creation
+
+RecognizerIntent: Handles voice command input via intents
+
+UI & User Experience
+Jetpack Compose: Declarative UI framework for cleaner and more maintainable code
+
+AutoResizeText: Provides dynamically scalable text for better readability
+
+LazyColumnScrollbar (library): Offers an intuitive, scrollable music list interface
+
+Local Data Management
+Room Database: Stores and manages metadata of local music files
+
+DataStore: Persists simple app settings efficiently
+
+---
+
 이 프로젝트는 노인 친화적인 음악 스트리밍 앱으로, 간편한 UI와 음성 인식 기능을 통해 스마트폰 사용이 익숙하지 않은 사용자도 쉽게 음악을 검색하고 감상할 수 있도록 설계되었습니다.
 
 https://github.com/user-attachments/assets/3e121e86-1bcb-4b77-832e-32eb2e4ad554
