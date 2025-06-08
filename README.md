@@ -1,3 +1,5 @@
+https://github.com/user-attachments/assets/3e121e86-1bcb-4b77-832e-32eb2e4ad554
+
 This project is a music streaming app designed for elderly users, featuring an intuitive user interface and voice recognition functionality. It enables users who are not familiar with smartphones to easily search for and listen to music.
 
 ## Key Tech Stack
@@ -39,8 +41,6 @@ This project is a music streaming app designed for elderly users, featuring an i
 ---
 
 이 프로젝트는 노인 친화적인 음악 스트리밍 앱으로, 간편한 UI와 음성 인식 기능을 통해 스마트폰 사용이 익숙하지 않은 사용자도 쉽게 음악을 검색하고 감상할 수 있도록 설계되었습니다.
-
-https://github.com/user-attachments/assets/3e121e86-1bcb-4b77-832e-32eb2e4ad554
 
 ---
 
